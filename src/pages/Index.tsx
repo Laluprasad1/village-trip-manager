@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TractorRegistration } from "@/components/TractorRegistration";
 import { TripAssignment } from "@/components/TripAssignment";
 import { DriverDashboard } from "@/components/DriverDashboard";
 import { AdminReports } from "@/components/AdminReports";
-import { Truck, Users, Calendar, TrendingUp, AlertCircle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Truck, Users, Calendar, BarChart3 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Driver {
   id: string;
@@ -36,73 +37,88 @@ interface Company {
 
 const Index = () => {
   const [drivers, setDrivers] = useState<Driver[]>([
-    { id: "1", serialNumber: 1, name: "Rajesh Kumar", isAvailable: true, monthlyTrips: 12, monthlyTarget: 15, isOnline: true },
-    { id: "2", serialNumber: 2, name: "Suresh Patel", isAvailable: true, monthlyTrips: 8, monthlyTarget: 15, isOnline: false },
-    { id: "3", serialNumber: 3, name: "Ramesh Singh", isAvailable: true, monthlyTrips: 18, monthlyTarget: 15, isOnline: true },
-    { id: "4", serialNumber: 4, name: "Mahesh Sharma", isAvailable: false, monthlyTrips: 5, monthlyTarget: 15, isOnline: true },
-    { id: "5", serialNumber: 5, name: "Dinesh Yadav", isAvailable: true, monthlyTrips: 14, monthlyTarget: 15, isOnline: true },
+    { id: "1", serialNumber: 1, name: "Ram Kumar", isAvailable: true, monthlyTrips: 12, monthlyTarget: 20, isOnline: true },
+    { id: "2", serialNumber: 2, name: "Shyam Singh", isAvailable: true, monthlyTrips: 18, monthlyTarget: 20, isOnline: true },
+    { id: "3", serialNumber: 3, name: "Gita Devi", isAvailable: false, monthlyTrips: 15, monthlyTarget: 20, isOnline: false },
+    { id: "4", serialNumber: 4, name: "Mohan Lal", isAvailable: true, monthlyTrips: 8, monthlyTarget: 20, isOnline: true },
+    { id: "5", serialNumber: 5, name: "Sita Kumari", isAvailable: true, monthlyTrips: 22, monthlyTarget: 20, isOnline: true },
   ]);
 
   const [trips, setTrips] = useState<Trip[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [currentSerialIndex, setCurrentSerialIndex] = useState(0);
-  const [selectedDriverId, setSelectedDriverId] = useState<string | null>("1");
+  const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const addDriver = (name: string) => {
-    const newSerial = Math.max(...drivers.map(d => d.serialNumber), 0) + 1;
+    const newSerial = Math.max(...drivers.map(d => d.serialNumber)) + 1;
     const newDriver: Driver = {
       id: Date.now().toString(),
       serialNumber: newSerial,
       name,
       isAvailable: true,
       monthlyTrips: 0,
-      monthlyTarget: 15,
-      isOnline: false
+      monthlyTarget: 20,
+      isOnline: true
     };
     setDrivers([...drivers, newDriver]);
+    toast({
+      title: "Driver Added",
+      description: `${name} has been registered with serial #${newSerial}`,
+    });
   };
 
-  const assignTrips = (company: string, totalTrips: number, vehiclesNeeded: number) => {
-    const newCompany: Company = {
-      name: company,
-      tripsRequested: totalTrips,
-      vehiclesAssigned: 0,
-      date: new Date().toISOString().split('T')[0]
-    };
+  const toggleDriverAvailability = (driverId: string) => {
+    setDrivers(drivers.map(driver => 
+      driver.id === driverId 
+        ? { ...driver, isOnline: !driver.isOnline }
+        : driver
+    ));
+  };
 
-    const availableDrivers = drivers.filter(d => d.isAvailable && d.isOnline);
-    const sortedDrivers = [...availableDrivers].sort((a, b) => a.serialNumber - b.serialNumber);
-    
-    let assignedCount = 0;
-    let driverIndex = currentSerialIndex;
-    const newTrips: Trip[] = [];
+  const assignTrips = (companyName: string, totalTrips: number, vehiclesNeeded: number) => {
+    const today = new Date().toISOString().split('T')[0];
+    const availableDrivers = drivers
+      .filter(d => d.isOnline)
+      .sort((a, b) => a.serialNumber - b.serialNumber);
 
-    while (assignedCount < vehiclesNeeded && assignedCount < sortedDrivers.length) {
-      const driver = sortedDrivers[driverIndex % sortedDrivers.length];
-      
-      const newTrip: Trip = {
-        id: Date.now().toString() + assignedCount,
-        driverId: driver.id,
-        company,
-        date: new Date().toISOString().split('T')[0],
-        status: 'pending',
-        assignedAt: new Date().toISOString()
-      };
-
-      newTrips.push(newTrip);
-      assignedCount++;
-      driverIndex++;
+    if (availableDrivers.length < vehiclesNeeded) {
+      toast({
+        title: "Insufficient Drivers",
+        description: `Only ${availableDrivers.length} drivers available, need ${vehiclesNeeded}`,
+        variant: "destructive"
+      });
+      return;
     }
 
-    newCompany.vehiclesAssigned = assignedCount;
-    setCompanies([...companies, newCompany]);
+    const selectedDrivers = availableDrivers.slice(0, vehiclesNeeded);
+    const newTrips: Trip[] = selectedDrivers.map(driver => ({
+      id: Date.now() + Math.random().toString(),
+      driverId: driver.id,
+      company: companyName,
+      date: today,
+      status: 'pending' as const,
+      assignedAt: new Date().toISOString()
+    }));
+
     setTrips([...trips, ...newTrips]);
-    setCurrentSerialIndex(driverIndex % sortedDrivers.length);
+    setCompanies([...companies, {
+      name: companyName,
+      tripsRequested: totalTrips,
+      vehiclesAssigned: vehiclesNeeded,
+      date: today
+    }]);
+
+    toast({
+      title: "Trips Assigned",
+      description: `Assigned ${vehiclesNeeded} vehicles to ${companyName}`,
+    });
   };
 
   const handleTripResponse = (tripId: string, response: 'accepted' | 'declined') => {
     setTrips(trips.map(trip => 
-      trip.id === tripId ? { ...trip, status: response } : trip
+      trip.id === tripId 
+        ? { ...trip, status: response }
+        : trip
     ));
 
     if (response === 'accepted') {
@@ -115,119 +131,102 @@ const Index = () => {
         ));
       }
     }
+
+    const trip = trips.find(t => t.id === tripId);
+    toast({
+      title: `Trip ${response}`,
+      description: trip ? `Trip to ${trip.company} has been ${response}` : '',
+    });
   };
 
-  const toggleDriverAvailability = (driverId: string) => {
-    setDrivers(drivers.map(driver => 
-      driver.id === driverId 
-        ? { ...driver, isOnline: !driver.isOnline }
-        : driver
-    ));
-  };
-
-  const onlineDrivers = drivers.filter(d => d.isOnline).length;
+  const onlineCount = drivers.filter(d => d.isOnline).length;
+  const todayTrips = trips.filter(t => t.date === new Date().toISOString().split('T')[0]).length;
   const pendingTrips = trips.filter(t => t.status === 'pending').length;
-  const belowTargetDrivers = drivers.filter(d => d.monthlyTrips < d.monthlyTarget).length;
-  const todayCompanies = companies.filter(c => c.date === new Date().toISOString().split('T')[0]).length;
+  const belowTargetCount = drivers.filter(d => d.monthlyTrips < d.monthlyTarget).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
-      <div className="container mx-auto p-4 max-w-7xl">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <Truck className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Water Tanker Management</h1>
-                <p className="text-sm text-gray-600">Village Union Fleet System</p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              {pendingTrips > 0 && (
-                <Badge variant="destructive" className="gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {pendingTrips} Pending
-                </Badge>
-              )}
-              {belowTargetDrivers > 0 && (
-                <Badge variant="outline" className="gap-1">
-                  <TrendingUp className="h-3 w-3" />
-                  {belowTargetDrivers} Below Target
-                </Badge>
-              )}
-            </div>
-          </div>
-
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Users className="h-5 w-5 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{drivers.length}</p>
-                  <p className="text-xs text-muted-foreground">Total Tractors</p>
-                </div>
-              </div>
-            </Card>
-            
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <div className="h-5 w-5 bg-green-500 rounded-full"></div>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{onlineDrivers}</p>
-                  <p className="text-xs text-muted-foreground">Online Now</p>
-                </div>
-              </div>
-            </Card>
-            
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-100 rounded-lg">
-                  <Calendar className="h-5 w-5 text-orange-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{todayCompanies}</p>
-                  <p className="text-xs text-muted-foreground">Companies Today</p>
-                </div>
-              </div>
-            </Card>
-            
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-100 rounded-lg">
-                  <AlertCircle className="h-5 w-5 text-red-600" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">{pendingTrips}</p>
-                  <p className="text-xs text-muted-foreground">Pending Trips</p>
-                </div>
-              </div>
-            </Card>
-          </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 animate-fade-in">
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-8 animate-scale-in">
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Village Water Tanker Management
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Managing daily trip assignments for tractor-tanker drivers
+          </p>
         </div>
 
-        <Tabs defaultValue="assignment" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="assignment">Trip Assignment</TabsTrigger>
-            <TabsTrigger value="fleet">Fleet Management</TabsTrigger>
-            <TabsTrigger value="drivers">Driver View</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <Card className="hover-scale transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Online Drivers</CardTitle>
+              <Truck className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{onlineCount}</div>
+              <p className="text-xs text-muted-foreground">Available for assignment</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover-scale transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Today's Trips</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{todayTrips}</div>
+              <p className="text-xs text-muted-foreground">Assigned today</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover-scale transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '0.3s' }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Responses</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">{pendingTrips}</div>
+              <p className="text-xs text-muted-foreground">Awaiting driver response</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover-scale transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '0.4s' }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Below Target</CardTitle>
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{belowTargetCount}</div>
+              <p className="text-xs text-muted-foreground">Need more trips</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="fleet" className="w-full animate-fade-in" style={{ animationDelay: '0.5s' }}>
+          <TabsList className="grid w-full grid-cols-4 mb-6 transition-all duration-300">
+            <TabsTrigger value="fleet" className="transition-all duration-200 hover:scale-105">Fleet Management</TabsTrigger>
+            <TabsTrigger value="assignment" className="transition-all duration-200 hover:scale-105">Trip Assignment</TabsTrigger>
+            <TabsTrigger value="driver" className="transition-all duration-200 hover:scale-105">Driver Dashboard</TabsTrigger>
+            <TabsTrigger value="reports" className="transition-all duration-200 hover:scale-105">Reports</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="assignment">
-            <TripAssignment onAssignTrips={assignTrips} companies={companies} />
+          <TabsContent value="fleet" className="animate-scale-in">
+            <TractorRegistration 
+              drivers={drivers}
+              onAddDriver={addDriver}
+              onToggleAvailability={toggleDriverAvailability}
+            />
           </TabsContent>
 
-          <TabsContent value="fleet">
-            <TractorRegistration drivers={drivers} onAddDriver={addDriver} onToggleAvailability={toggleDriverAvailability} />
+          <TabsContent value="assignment" className="animate-scale-in">
+            <TripAssignment 
+              onAssignTrips={assignTrips}
+              companies={companies}
+            />
           </TabsContent>
 
-          <TabsContent value="drivers">
+          <TabsContent value="driver" className="animate-scale-in">
             <DriverDashboard 
               drivers={drivers}
               trips={trips}
@@ -237,8 +236,12 @@ const Index = () => {
             />
           </TabsContent>
 
-          <TabsContent value="reports">
-            <AdminReports drivers={drivers} trips={trips} companies={companies} />
+          <TabsContent value="reports" className="animate-scale-in">
+            <AdminReports 
+              drivers={drivers}
+              trips={trips}
+              companies={companies}
+            />
           </TabsContent>
         </Tabs>
       </div>

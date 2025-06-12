@@ -46,7 +46,7 @@ export const DriverDashboard = ({
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <User className="h-5 w-5" />
@@ -56,12 +56,12 @@ export const DriverDashboard = ({
         </CardHeader>
         <CardContent>
           <Select value={selectedDriverId || ""} onValueChange={onSelectDriver}>
-            <SelectTrigger>
+            <SelectTrigger className="transition-all duration-200 hover:scale-105">
               <SelectValue placeholder="Select a driver" />
             </SelectTrigger>
             <SelectContent>
               {drivers.map((driver) => (
-                <SelectItem key={driver.id} value={driver.id}>
+                <SelectItem key={driver.id} value={driver.id} className="transition-all duration-200 hover:bg-blue-50">
                   #{driver.serialNumber.toString().padStart(3, '0')} - {driver.name}
                 </SelectItem>
               ))}
@@ -72,14 +72,14 @@ export const DriverDashboard = ({
 
       {selectedDriver && (
         <>
-          <Card>
+          <Card className="transition-all duration-300 hover:shadow-lg animate-scale-in">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <User className="h-5 w-5" />
                   Driver: {selectedDriver.name}
                 </div>
-                <Badge variant="outline" className="font-mono text-lg">
+                <Badge variant="outline" className="font-mono text-lg transition-all duration-200 hover:scale-110">
                   #{selectedDriver.serialNumber.toString().padStart(3, '0')}
                 </Badge>
               </CardTitle>
@@ -87,21 +87,21 @@ export const DriverDashboard = ({
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                <div className="flex items-center space-x-3 p-4 border rounded-lg transition-all duration-300 hover:shadow-md hover:scale-105 animate-fade-in" style={{ animationDelay: '0.1s' }}>
                   <Target className="h-8 w-8 text-blue-600" />
                   <div>
                     <p className="text-2xl font-bold">{selectedDriver.monthlyTrips}</p>
                     <p className="text-sm text-muted-foreground">Trips This Month</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                <div className="flex items-center space-x-3 p-4 border rounded-lg transition-all duration-300 hover:shadow-md hover:scale-105 animate-fade-in" style={{ animationDelay: '0.2s' }}>
                   <Clock className="h-8 w-8 text-orange-600" />
                   <div>
                     <p className="text-2xl font-bold">{pendingTrips.length}</p>
                     <p className="text-sm text-muted-foreground">Pending Assignments</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                <div className="flex items-center space-x-3 p-4 border rounded-lg transition-all duration-300 hover:shadow-md hover:scale-105 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                   <CheckCircle className="h-8 w-8 text-green-600" />
                   <div>
                     <p className="text-2xl font-bold">{selectedDriver.monthlyTarget - selectedDriver.monthlyTrips}</p>
@@ -113,21 +113,25 @@ export const DriverDashboard = ({
           </Card>
 
           {pendingTrips.length > 0 && (
-            <Card>
+            <Card className="transition-all duration-300 hover:shadow-lg animate-slide-in-right">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5" />
+                  <Clock className="h-5 w-5 animate-pulse" />
                   Pending Trip Assignments
                 </CardTitle>
                 <CardDescription>Please accept or decline these trip assignments</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {pendingTrips.map((trip) => (
-                    <div key={trip.id} className="p-4 border rounded-lg bg-orange-50 border-orange-200">
+                  {pendingTrips.map((trip, index) => (
+                    <div 
+                      key={trip.id} 
+                      className="p-4 border rounded-lg bg-orange-50 border-orange-200 transition-all duration-300 hover:shadow-md hover:scale-[1.02] animate-fade-in"
+                      style={{ animationDelay: `${0.1 * index}s` }}
+                    >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-medium">{trip.company}</p>
+                          <p className="font-medium transition-colors duration-200 hover:text-orange-600">{trip.company}</p>
                           <p className="text-sm text-muted-foreground">
                             Date: {new Date(trip.date).toLocaleDateString()}
                           </p>
@@ -140,6 +144,7 @@ export const DriverDashboard = ({
                             size="sm" 
                             variant="outline"
                             onClick={() => onTripResponse(trip.id, 'declined')}
+                            className="transition-all duration-200 hover:scale-105"
                           >
                             <XCircle className="h-4 w-4 mr-1" />
                             Decline
@@ -147,6 +152,7 @@ export const DriverDashboard = ({
                           <Button 
                             size="sm"
                             onClick={() => onTripResponse(trip.id, 'accepted')}
+                            className="transition-all duration-200 hover:scale-105"
                           >
                             <CheckCircle className="h-4 w-4 mr-1" />
                             Accept
@@ -160,20 +166,24 @@ export const DriverDashboard = ({
             </Card>
           )}
 
-          <Card>
+          <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '0.4s' }}>
             <CardHeader>
               <CardTitle>Trip History</CardTitle>
               <CardDescription>Your recent trip assignments and status</CardDescription>
             </CardHeader>
             <CardContent>
               {driverTrips.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No trips assigned yet</p>
+                <p className="text-muted-foreground text-center py-8 animate-pulse">No trips assigned yet</p>
               ) : (
                 <div className="space-y-2">
-                  {driverTrips.map((trip) => (
-                    <div key={trip.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  {driverTrips.map((trip, index) => (
+                    <div 
+                      key={trip.id} 
+                      className="flex items-center justify-between p-3 border rounded-lg transition-all duration-300 hover:shadow-md hover:scale-[1.02] animate-fade-in"
+                      style={{ animationDelay: `${0.1 * index}s` }}
+                    >
                       <div>
-                        <p className="font-medium">{trip.company}</p>
+                        <p className="font-medium transition-colors duration-200 hover:text-blue-600">{trip.company}</p>
                         <p className="text-sm text-muted-foreground">{new Date(trip.date).toLocaleDateString()}</p>
                       </div>
                       <Badge 
@@ -182,6 +192,7 @@ export const DriverDashboard = ({
                           trip.status === 'declined' ? 'destructive' :
                           trip.status === 'completed' ? 'default' : 'secondary'
                         }
+                        className="transition-all duration-200 hover:scale-110"
                       >
                         {trip.status}
                       </Badge>
