@@ -1,14 +1,12 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TractorRegistration } from "@/components/TractorRegistration";
 import { TripAssignment } from "@/components/TripAssignment";
 import { DriverDashboard } from "@/components/DriverDashboard";
 import { AdminReports } from "@/components/AdminReports";
-import { Tractor, Truck } from "lucide-react";
+import { Truck, Users, Calendar, TrendingUp, AlertCircle } from "lucide-react";
 
 interface Driver {
   id: string;
@@ -127,77 +125,106 @@ const Index = () => {
     ));
   };
 
+  const onlineDrivers = drivers.filter(d => d.isOnline).length;
+  const pendingTrips = trips.filter(t => t.status === 'pending').length;
+  const belowTargetDrivers = drivers.filter(d => d.monthlyTrips < d.monthlyTarget).length;
+  const todayCompanies = companies.filter(c => c.date === new Date().toISOString().split('T')[0]).length;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50">
-      <div className="container mx-auto p-6">
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center mb-4">
-            <Tractor className="h-12 w-12 text-blue-600 mr-3" />
-            <h1 className="text-4xl font-bold text-gray-900">Water Tanker Management</h1>
+      <div className="container mx-auto p-4 max-w-7xl">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Truck className="h-8 w-8 text-blue-600" />
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Water Tanker Management</h1>
+                <p className="text-sm text-gray-600">Village Union Fleet System</p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              {pendingTrips > 0 && (
+                <Badge variant="destructive" className="gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  {pendingTrips} Pending
+                </Badge>
+              )}
+              {belowTargetDrivers > 0 && (
+                <Badge variant="outline" className="gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  {belowTargetDrivers} Below Target
+                </Badge>
+              )}
+            </div>
           </div>
-          <p className="text-lg text-gray-600">Village Union Fleet Management System</p>
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{drivers.length}</p>
+                  <p className="text-xs text-muted-foreground">Total Tractors</p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <div className="h-5 w-5 bg-green-500 rounded-full"></div>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{onlineDrivers}</p>
+                  <p className="text-xs text-muted-foreground">Online Now</p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-100 rounded-lg">
+                  <Calendar className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{todayCompanies}</p>
+                  <p className="text-xs text-muted-foreground">Companies Today</p>
+                </div>
+              </div>
+            </Card>
+            
+            <Card className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-100 rounded-lg">
+                  <AlertCircle className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{pendingTrips}</p>
+                  <p className="text-xs text-muted-foreground">Pending Trips</p>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-fit lg:grid-cols-4">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+        <Tabs defaultValue="assignment" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="assignment">Trip Assignment</TabsTrigger>
+            <TabsTrigger value="fleet">Fleet Management</TabsTrigger>
             <TabsTrigger value="drivers">Driver View</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Total Tractors</CardTitle>
-                  <Truck className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{drivers.length}</div>
-                  <p className="text-xs text-muted-foreground">Registered vehicles</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Online Drivers</CardTitle>
-                  <div className="h-4 w-4 bg-green-500 rounded-full"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{drivers.filter(d => d.isOnline).length}</div>
-                  <p className="text-xs text-muted-foreground">Available for trips</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Today's Companies</CardTitle>
-                  <div className="h-4 w-4 bg-blue-500 rounded-full"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{companies.length}</div>
-                  <p className="text-xs text-muted-foreground">Served today</p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pending Trips</CardTitle>
-                  <div className="h-4 w-4 bg-orange-500 rounded-full"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{trips.filter(t => t.status === 'pending').length}</div>
-                  <p className="text-xs text-muted-foreground">Awaiting response</p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <TractorRegistration drivers={drivers} onAddDriver={addDriver} onToggleAvailability={toggleDriverAvailability} />
-          </TabsContent>
-
           <TabsContent value="assignment">
             <TripAssignment onAssignTrips={assignTrips} companies={companies} />
+          </TabsContent>
+
+          <TabsContent value="fleet">
+            <TractorRegistration drivers={drivers} onAddDriver={addDriver} onToggleAvailability={toggleDriverAvailability} />
           </TabsContent>
 
           <TabsContent value="drivers">
