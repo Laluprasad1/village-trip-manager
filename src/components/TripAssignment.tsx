@@ -1,9 +1,9 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Building2, Plus, Truck, Clock } from "lucide-react";
 
 interface Company {
@@ -18,10 +18,26 @@ interface TripAssignmentProps {
   companies: Company[];
 }
 
+const commonCompanies = [
+  "Pepsi Factory",
+  "Coca Cola Plant",
+  "Nestle Manufacturing",
+  "Tata Steel",
+  "Reliance Industries",
+  "Bajaj Auto",
+  "Hero MotoCorp",
+  "Mahindra & Mahindra",
+  "Godrej Industries",
+  "ITC Limited",
+  "Hindustan Unilever",
+  "Asian Paints"
+];
+
 export const TripAssignment = ({ onAssignTrips, companies }: TripAssignmentProps) => {
   const [companyName, setCompanyName] = useState("");
   const [totalTrips, setTotalTrips] = useState("");
   const [vehiclesNeeded, setVehiclesNeeded] = useState("");
+  const [useCustomCompany, setUseCustomCompany] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,6 +46,7 @@ export const TripAssignment = ({ onAssignTrips, companies }: TripAssignmentProps
       setCompanyName("");
       setTotalTrips("");
       setVehiclesNeeded("");
+      setUseCustomCompany(false);
     }
   };
 
@@ -52,12 +69,52 @@ export const TripAssignment = ({ onAssignTrips, companies }: TripAssignmentProps
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
                 <label className="text-sm font-medium mb-2 block">Company Name</label>
-                <Input
-                  placeholder="Enter company name"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  className="transition-all duration-200 focus:scale-105"
-                />
+                {!useCustomCompany ? (
+                  <div className="space-y-2">
+                    <Select value={companyName} onValueChange={setCompanyName}>
+                      <SelectTrigger className="transition-all duration-200 focus:scale-105">
+                        <SelectValue placeholder="Select a company" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {commonCompanies.map((company) => (
+                          <SelectItem key={company} value={company}>
+                            {company}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setUseCustomCompany(true)}
+                      className="w-full text-xs"
+                    >
+                      Or enter custom company name
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Enter company name"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className="transition-all duration-200 focus:scale-105"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setUseCustomCompany(false);
+                        setCompanyName("");
+                      }}
+                      className="w-full text-xs"
+                    >
+                      Back to company list
+                    </Button>
+                  </div>
+                )}
               </div>
               <div className="animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 <label className="text-sm font-medium mb-2 block">Total Trips</label>
