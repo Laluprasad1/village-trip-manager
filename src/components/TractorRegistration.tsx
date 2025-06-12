@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Truck, Search, AlertTriangle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Plus, Truck, Search, AlertTriangle, Edit, Save, X } from "lucide-react";
 
 interface Driver {
   id: string;
@@ -20,12 +21,15 @@ interface Driver {
 interface TractorRegistrationProps {
   drivers: Driver[];
   onAddDriver: (name: string) => void;
+  onUpdateDriver: (driverId: string, updates: Partial<Driver>) => void;
   onToggleAvailability: (driverId: string) => void;
 }
 
-export const TractorRegistration = ({ drivers, onAddDriver, onToggleAvailability }: TractorRegistrationProps) => {
+export const TractorRegistration = ({ drivers, onAddDriver, onUpdateDriver, onToggleAvailability }: TractorRegistrationProps) => {
   const [newDriverName, setNewDriverName] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingDriver, setEditingDriver] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ name: string; monthlyTarget: number }>({ name: "", monthlyTarget: 20 });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,6 +37,26 @@ export const TractorRegistration = ({ drivers, onAddDriver, onToggleAvailability
       onAddDriver(newDriverName.trim());
       setNewDriverName("");
     }
+  };
+
+  const startEdit = (driver: Driver) => {
+    setEditingDriver(driver.id);
+    setEditForm({ name: driver.name, monthlyTarget: driver.monthlyTarget });
+  };
+
+  const saveEdit = () => {
+    if (editingDriver) {
+      onUpdateDriver(editingDriver, {
+        name: editForm.name,
+        monthlyTarget: editForm.monthlyTarget
+      });
+      setEditingDriver(null);
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingDriver(null);
+    setEditForm({ name: "", monthlyTarget: 20 });
   };
 
   const filteredDrivers = drivers.filter(driver =>
@@ -111,7 +135,7 @@ export const TractorRegistration = ({ drivers, onAddDriver, onToggleAvailability
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3">
+          <div className="grid gap-3 max-h-96 overflow-y-auto">
             {filteredDrivers.map((driver, index) => (
               <div 
                 key={driver.id} 
@@ -122,21 +146,74 @@ export const TractorRegistration = ({ drivers, onAddDriver, onToggleAvailability
                   <Badge variant="outline" className="font-mono text-base px-3 py-1 transition-all duration-200 hover:scale-110">
                     #{driver.serialNumber.toString().padStart(3, '0')}
                   </Badge>
-                  <div>
-                    <p className="font-medium text-lg transition-colors duration-200 hover:text-blue-600">{driver.name}</p>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-sm text-muted-foreground">
-                        {driver.monthlyTrips}/{driver.monthlyTarget} trips
-                      </span>
-                      {driver.monthlyTrips < driver.monthlyTarget && (
-                        <Badge variant="destructive" className="text-xs animate-pulse">
-                          {driver.monthlyTarget - driver.monthlyTrips} behind
-                        </Badge>
-                      )}
+                  
+                  {editingDriver === driver.id ? (
+                    <div className="space-y-2">
+                      <Input
+                        value={editForm.name}
+                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                        className="w-48"
+                        placeholder="Driver Name"
+                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm">Target:</span>
+                        <Input
+                          type="number"
+                          value={editForm.monthlyTarget}
+                          onChange={(e) => setEditForm({ ...editForm, monthlyTarget: parseInt(e.target.value) || 20 })}
+                          className="w-20"
+                          min="1"
+                        />
+                        <span className="text-sm text-muted-foreground">trips/month</span>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div>
+                      <p className="font-medium text-lg transition-colors duration-200 hover:text-blue-600">{driver.name}</p>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-sm text-muted-foreground">
+                          {driver.monthlyTrips}/{driver.monthlyTarget} trips
+                        </span>
+                        {driver.monthlyTrips < driver.monthlyTarget && (
+                          <Badge variant="destructive" className="text-xs animate-pulse">
+                            {driver.monthlyTarget - driver.monthlyTrips} behind
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
+                
                 <div className="flex items-center space-x-4">
+                  {editingDriver === driver.id ? (
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        size="sm"
+                        onClick={saveEdit}
+                        className="transition-all duration-200 hover:scale-105"
+                      >
+                        <Save className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={cancelEdit}
+                        className="transition-all duration-200 hover:scale-105"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => startEdit(driver)}
+                      className="transition-all duration-200 hover:scale-105"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
+                  
                   <div className="flex items-center space-x-3">
                     <span className="text-sm font-medium transition-colors duration-200">
                       {driver.isOnline ? "Online" : "Offline"}

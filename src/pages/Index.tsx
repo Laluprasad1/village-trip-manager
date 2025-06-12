@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,6 +6,7 @@ import { TractorRegistration } from "@/components/TractorRegistration";
 import { TripAssignment } from "@/components/TripAssignment";
 import { DriverDashboard } from "@/components/DriverDashboard";
 import { AdminReports } from "@/components/AdminReports";
+import { TodayAssignments } from "@/components/TodayAssignments";
 import { Badge } from "@/components/ui/badge";
 import { Truck, Users, Calendar, BarChart3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -35,15 +37,34 @@ interface Company {
   date: string;
 }
 
-const Index = () => {
-  const [drivers, setDrivers] = useState<Driver[]>([
-    { id: "1", serialNumber: 1, name: "Ram Kumar", isAvailable: true, monthlyTrips: 12, monthlyTarget: 20, isOnline: true },
-    { id: "2", serialNumber: 2, name: "Shyam Singh", isAvailable: true, monthlyTrips: 18, monthlyTarget: 20, isOnline: true },
-    { id: "3", serialNumber: 3, name: "Gita Devi", isAvailable: false, monthlyTrips: 15, monthlyTarget: 20, isOnline: false },
-    { id: "4", serialNumber: 4, name: "Mohan Lal", isAvailable: true, monthlyTrips: 8, monthlyTarget: 20, isOnline: true },
-    { id: "5", serialNumber: 5, name: "Sita Kumari", isAvailable: true, monthlyTrips: 22, monthlyTarget: 20, isOnline: true },
-  ]);
+// Generate 100 drivers with realistic names
+const generateDrivers = (): Driver[] => {
+  const names = [
+    "Ram Kumar", "Shyam Singh", "Gita Devi", "Mohan Lal", "Sita Kumari",
+    "Arjun Sharma", "Priya Yadav", "Vikash Gupta", "Sunita Joshi", "Rajesh Verma",
+    "Kavita Patel", "Suresh Thakur", "Anita Mishra", "Deepak Roy", "Meera Shah",
+    "Amit Agarwal", "Pooja Sinha", "Ravi Kumar", "Nisha Pandey", "Gopal Das",
+    "Sarita Devi", "Mukesh Jha", "Rekha Singh", "Vijay Tiwari", "Usha Gupta",
+    "Manoj Rai", "Seema Sharma", "Prakash Yadav", "Lalita Kumari", "Ashok Verma",
+    "Pushpa Devi", "Ramesh Kumar", "Kiran Joshi", "Sunil Pandey", "Radha Singh",
+    "Dinesh Gupta", "Manju Devi", "Santosh Kumar", "Geeta Sharma", "Anil Yadav",
+    "Savita Singh", "Bharat Lal", "Sushma Kumari", "Naresh Verma", "Kamala Devi",
+    "Rajendra Singh", "Sudha Gupta", "Mahesh Kumar", "Shanti Devi", "Pawan Sharma"
+  ];
+  
+  return Array.from({ length: 100 }, (_, index) => ({
+    id: (index + 1).toString(),
+    serialNumber: index + 1,
+    name: names[index % names.length] + (index >= names.length ? ` ${Math.floor(index / names.length) + 1}` : ''),
+    isAvailable: true,
+    monthlyTrips: Math.floor(Math.random() * 25),
+    monthlyTarget: 20,
+    isOnline: Math.random() > 0.2 // 80% online
+  }));
+};
 
+const Index = () => {
+  const [drivers, setDrivers] = useState<Driver[]>(generateDrivers());
   const [trips, setTrips] = useState<Trip[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
@@ -65,6 +86,14 @@ const Index = () => {
       title: "Driver Added",
       description: `${name} has been registered with serial #${newSerial}`,
     });
+  };
+
+  const updateDriver = (driverId: string, updates: Partial<Driver>) => {
+    setDrivers(drivers.map(driver => 
+      driver.id === driverId 
+        ? { ...driver, ...updates }
+        : driver
+    ));
   };
 
   const toggleDriverAvailability = (driverId: string) => {
@@ -164,7 +193,7 @@ const Index = () => {
               <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{onlineCount}</div>
+              <div className="text-2xl font-bold text-green-600">{onlineCount}/100</div>
               <p className="text-xs text-muted-foreground">Available for assignment</p>
             </CardContent>
           </Card>
@@ -203,6 +232,11 @@ const Index = () => {
           </Card>
         </div>
 
+        {/* Today's Assignments */}
+        <div className="mb-8">
+          <TodayAssignments drivers={drivers} trips={trips} companies={companies} />
+        </div>
+
         <Tabs defaultValue="fleet" className="w-full animate-fade-in" style={{ animationDelay: '0.5s' }}>
           <TabsList className="grid w-full grid-cols-4 mb-6 transition-all duration-300">
             <TabsTrigger value="fleet" className="transition-all duration-200 hover:scale-105">Fleet Management</TabsTrigger>
@@ -215,6 +249,7 @@ const Index = () => {
             <TractorRegistration 
               drivers={drivers}
               onAddDriver={addDriver}
+              onUpdateDriver={updateDriver}
               onToggleAvailability={toggleDriverAvailability}
             />
           </TabsContent>
