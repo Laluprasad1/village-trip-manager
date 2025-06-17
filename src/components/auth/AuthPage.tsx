@@ -9,25 +9,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Truck, UserCog, Eye, EyeOff } from 'lucide-react';
+import { Truck, UserCog, Eye, EyeOff, Phone, Lock } from 'lucide-react';
 
 export const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPin, setShowPin] = useState(false);
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const [loginForm, setLoginForm] = useState({
-    email: '',
-    password: '',
+    mobile: '',
+    pin: '',
   });
 
   const [signupForm, setSignupForm] = useState({
-    email: '',
-    password: '',
+    mobile: '',
+    pin: '',
     full_name: '',
-    mobile_number: '',
     role: 'driver' as 'driver' | 'admin',
   });
 
@@ -35,7 +34,7 @@ export const AuthPage = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signIn(loginForm.email, loginForm.password);
+    const { error } = await signIn(loginForm.mobile, loginForm.pin);
 
     if (error) {
       toast({
@@ -58,9 +57,8 @@ export const AuthPage = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    const { error } = await signUp(signupForm.email, signupForm.password, {
+    const { error } = await signUp(signupForm.mobile, signupForm.pin, {
       full_name: signupForm.full_name,
-      mobile_number: signupForm.mobile_number,
       role: signupForm.role,
     });
 
@@ -73,8 +71,11 @@ export const AuthPage = () => {
     } else {
       toast({
         title: 'Registration Successful!',
-        description: 'Please check your email to verify your account.',
+        description: 'You can now login with your mobile number and PIN.',
       });
+      // Switch to login tab
+      const loginTab = document.querySelector('[value="login"]') as HTMLElement;
+      loginTab?.click();
     }
 
     setIsLoading(false);
@@ -89,7 +90,7 @@ export const AuthPage = () => {
             Water Tanker Management
           </CardTitle>
           <CardDescription>
-            Login to access your dashboard
+            Login with your mobile number and PIN
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -102,25 +103,31 @@ export const AuthPage = () => {
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={loginForm.email}
-                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
-                    required
-                  />
+                  <Label htmlFor="login-mobile">Mobile Number</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="login-mobile"
+                      type="tel"
+                      placeholder="Enter your mobile number"
+                      className="pl-10"
+                      value={loginForm.mobile}
+                      onChange={(e) => setLoginForm({ ...loginForm, mobile: e.target.value })}
+                      required
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="login-pin">PIN</Label>
                   <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      id="login-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
-                      value={loginForm.password}
-                      onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                      id="login-pin"
+                      type={showPin ? 'text' : 'password'}
+                      placeholder="Enter your PIN"
+                      className="pl-10 pr-10"
+                      value={loginForm.pin}
+                      onChange={(e) => setLoginForm({ ...loginForm, pin: e.target.value })}
                       required
                     />
                     <Button
@@ -128,9 +135,9 @@ export const AuthPage = () => {
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() => setShowPin(!showPin)}
                     >
-                      {showPassword ? (
+                      {showPin ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
                         <Eye className="h-4 w-4" />
@@ -188,53 +195,52 @@ export const AuthPage = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="signup-mobile">Mobile Number</Label>
-                  <Input
-                    id="signup-mobile"
-                    type="tel"
-                    placeholder="Enter your mobile number"
-                    value={signupForm.mobile_number}
-                    onChange={(e) => setSignupForm({ ...signupForm, mobile_number: e.target.value })}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={signupForm.email}
-                    onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      id="signup-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Create a password"
-                      value={signupForm.password}
-                      onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
+                      id="signup-mobile"
+                      type="tel"
+                      placeholder="Enter your mobile number"
+                      className="pl-10"
+                      value={signupForm.mobile}
+                      onChange={(e) => setSignupForm({ ...signupForm, mobile: e.target.value })}
                       required
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="signup-pin">Create PIN</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="signup-pin"
+                      type={showPin ? 'text' : 'password'}
+                      placeholder="Create a 4-6 digit PIN"
+                      className="pl-10 pr-10"
+                      value={signupForm.pin}
+                      onChange={(e) => setSignupForm({ ...signupForm, pin: e.target.value })}
+                      required
+                      minLength={4}
+                      maxLength={6}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() => setShowPin(!showPin)}
                     >
-                      {showPassword ? (
+                      {showPin ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
                         <Eye className="h-4 w-4" />
                       )}
                     </Button>
                   </div>
+                  <p className="text-xs text-gray-500">
+                    Create a secure 4-6 digit PIN for login
+                  </p>
                 </div>
                 
                 <Button type="submit" className="w-full" disabled={isLoading}>

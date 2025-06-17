@@ -8,8 +8,8 @@ interface AuthContextType {
   session: Session | null;
   userRole: 'driver' | 'admin' | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, userData: { full_name: string; mobile_number: string; role: 'driver' | 'admin' }) => Promise<{ error: any }>;
+  signIn: (mobile: string, pin: string) => Promise<{ error: any }>;
+  signUp: (mobile: string, pin: string, userData: { full_name: string; role: 'driver' | 'admin' }) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
 }
 
@@ -73,27 +73,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (mobile: string, pin: string) => {
+    // Create a dummy email from mobile number for Supabase auth
+    const email = `${mobile}@watertanker.local`;
+    
     const { error } = await supabase.auth.signInWithPassword({
       email,
-      password,
+      password: pin,
     });
     return { error };
   };
 
   const signUp = async (
-    email: string, 
-    password: string, 
-    userData: { full_name: string; mobile_number: string; role: 'driver' | 'admin' }
+    mobile: string, 
+    pin: string, 
+    userData: { full_name: string; role: 'driver' | 'admin' }
   ) => {
-    const redirectUrl = `${window.location.origin}/`;
+    // Create a dummy email from mobile number for Supabase auth
+    const email = `${mobile}@watertanker.local`;
     
     const { error } = await supabase.auth.signUp({
       email,
-      password,
+      password: pin,
       options: {
-        emailRedirectTo: redirectUrl,
-        data: userData
+        data: {
+          ...userData,
+          mobile_number: mobile
+        }
       }
     });
     return { error };
