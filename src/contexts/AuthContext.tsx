@@ -74,8 +74,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (mobile: string, pin: string) => {
-    // Create a dummy email from mobile number for Supabase auth
-    const email = `${mobile}@watertanker.local`;
+    // Create a proper email format that Supabase will accept
+    const email = `${mobile}@domain.com`;
     
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -89,8 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     pin: string, 
     userData: { full_name: string; role: 'driver' | 'admin' }
   ) => {
-    // Create a dummy email from mobile number for Supabase auth
-    const email = `${mobile}@watertanker.local`;
+    // Create a proper email format that Supabase will accept
+    const email = `${mobile}@domain.com`;
     
     const { error } = await supabase.auth.signUp({
       email,
