@@ -50,6 +50,26 @@ export const AuthPage = () => {
       return;
     }
 
+    // Validate mobile number format (basic validation)
+    if (loginForm.mobile.length < 10) {
+      toast({
+        title: 'Invalid Mobile Number',
+        description: 'Please enter a valid mobile number.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate PIN format
+    if (loginForm.pin.length < 4) {
+      toast({
+        title: 'Invalid PIN',
+        description: 'PIN must be at least 4 digits.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
     console.log('Attempting login with mobile:', loginForm.mobile);
 
@@ -59,7 +79,7 @@ export const AuthPage = () => {
       console.log('Login error:', error.message);
       toast({
         title: 'Login Failed',
-        description: error.message,
+        description: error.message || 'Unable to log in. Please check your credentials.',
         variant: 'destructive',
       });
     } else {
@@ -86,6 +106,26 @@ export const AuthPage = () => {
       return;
     }
 
+    // Validate mobile number format
+    if (signupForm.mobile.length < 10) {
+      toast({
+        title: 'Invalid Mobile Number',
+        description: 'Please enter a valid mobile number (at least 10 digits).',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Validate PIN format
+    if (signupForm.pin.length < 4 || signupForm.pin.length > 6) {
+      toast({
+        title: 'Invalid PIN',
+        description: 'PIN must be between 4-6 digits.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
     console.log('Attempting signup with mobile:', signupForm.mobile, 'role:', signupForm.role);
 
@@ -98,19 +138,18 @@ export const AuthPage = () => {
       console.log('Signup error:', error.message);
       toast({
         title: 'Registration Failed',
-        description: error.message,
+        description: error.message || 'Unable to create account. Please try again.',
         variant: 'destructive',
       });
     } else {
       console.log('Signup successful');
       toast({
-        title: 'Registration Successful!',
-        description: 'Account created successfully. You can now login.',
+        title: 'Account Created Successfully!',
+        description: 'You can now log in with your credentials.',
       });
-      // Switch to login tab
+      // Switch to login tab and clear signup form
       const loginTab = document.querySelector('[value="login"]') as HTMLElement;
       loginTab?.click();
-      // Clear signup form
       setSignupForm({
         mobile: '',
         pin: '',
@@ -153,8 +192,9 @@ export const AuthPage = () => {
                       placeholder="Enter your mobile number"
                       className="pl-10"
                       value={loginForm.mobile}
-                      onChange={(e) => setLoginForm({ ...loginForm, mobile: e.target.value })}
+                      onChange={(e) => setLoginForm({ ...loginForm, mobile: e.target.value.replace(/\D/g, '') })}
                       required
+                      maxLength={15}
                     />
                   </div>
                 </div>
@@ -168,8 +208,9 @@ export const AuthPage = () => {
                       placeholder="Enter your PIN"
                       className="pl-10 pr-10"
                       value={loginForm.pin}
-                      onChange={(e) => setLoginForm({ ...loginForm, pin: e.target.value })}
+                      onChange={(e) => setLoginForm({ ...loginForm, pin: e.target.value.replace(/\D/g, '') })}
                       required
+                      maxLength={6}
                     />
                     <Button
                       type="button"
@@ -244,8 +285,9 @@ export const AuthPage = () => {
                       placeholder="Enter your mobile number"
                       className="pl-10"
                       value={signupForm.mobile}
-                      onChange={(e) => setSignupForm({ ...signupForm, mobile: e.target.value })}
+                      onChange={(e) => setSignupForm({ ...signupForm, mobile: e.target.value.replace(/\D/g, '') })}
                       required
+                      maxLength={15}
                     />
                   </div>
                 </div>
@@ -260,7 +302,7 @@ export const AuthPage = () => {
                       placeholder="Create a 4-6 digit PIN"
                       className="pl-10 pr-10"
                       value={signupForm.pin}
-                      onChange={(e) => setSignupForm({ ...signupForm, pin: e.target.value })}
+                      onChange={(e) => setSignupForm({ ...signupForm, pin: e.target.value.replace(/\D/g, '') })}
                       required
                       minLength={4}
                       maxLength={6}
