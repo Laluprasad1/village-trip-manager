@@ -16,7 +16,7 @@ export const DriverPortal = () => {
     todayAssignment: {
       company: "ABC Water Industries",
       position: 3,
-      status: "pending" as "pending" | "accepted" | "declined",
+      status: "pending" as const,
       assignedAt: new Date().toISOString()
     }
   };

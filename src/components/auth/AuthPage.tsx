@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,81 +9,41 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Truck, UserCog, Eye, EyeOff, Phone, Lock } from 'lucide-react';
+import { Truck, UserCog, Eye, EyeOff } from 'lucide-react';
 
 export const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [showPin, setShowPin] = useState(false);
-  const { signIn, signUp, user } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const { signIn, signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      console.log('User already logged in, redirecting to dashboard');
-      navigate('/');
-    }
-  }, [user, navigate]);
-
   const [loginForm, setLoginForm] = useState({
-    mobile: '',
-    pin: '',
+    email: '',
+    password: '',
   });
 
   const [signupForm, setSignupForm] = useState({
-    mobile: '',
-    pin: '',
+    email: '',
+    password: '',
     full_name: '',
+    mobile_number: '',
     role: 'driver' as 'driver' | 'admin',
   });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!loginForm.mobile || !loginForm.pin) {
-      toast({
-        title: 'Missing Information',
-        description: 'Please enter both mobile number and PIN.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate mobile number format (basic validation)
-    if (loginForm.mobile.length < 10) {
-      toast({
-        title: 'Invalid Mobile Number',
-        description: 'Please enter a valid mobile number.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate PIN format
-    if (loginForm.pin.length < 4) {
-      toast({
-        title: 'Invalid PIN',
-        description: 'PIN must be at least 4 digits.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsLoading(true);
-    console.log('Attempting login with mobile:', loginForm.mobile);
 
-    const { error } = await signIn(loginForm.mobile, loginForm.pin);
+    const { error } = await signIn(loginForm.email, loginForm.password);
 
     if (error) {
-      console.log('Login error:', error.message);
       toast({
         title: 'Login Failed',
-        description: error.message || 'Unable to log in. Please check your credentials.',
+        description: error.message,
         variant: 'destructive',
       });
     } else {
-      console.log('Login successful, navigating to dashboard');
       toast({
         title: 'Welcome back!',
         description: 'Successfully logged in.',
@@ -96,65 +56,24 @@ export const AuthPage = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!signupForm.mobile || !signupForm.pin || !signupForm.full_name) {
-      toast({
-        title: 'Missing Information',
-        description: 'Please fill in all required fields.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate mobile number format
-    if (signupForm.mobile.length < 10) {
-      toast({
-        title: 'Invalid Mobile Number',
-        description: 'Please enter a valid mobile number (at least 10 digits).',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Validate PIN format
-    if (signupForm.pin.length < 4 || signupForm.pin.length > 6) {
-      toast({
-        title: 'Invalid PIN',
-        description: 'PIN must be between 4-6 digits.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setIsLoading(true);
-    console.log('Attempting signup with mobile:', signupForm.mobile, 'role:', signupForm.role);
 
-    const { error } = await signUp(signupForm.mobile, signupForm.pin, {
+    const { error } = await signUp(signupForm.email, signupForm.password, {
       full_name: signupForm.full_name,
+      mobile_number: signupForm.mobile_number,
       role: signupForm.role,
     });
 
     if (error) {
-      console.log('Signup error:', error.message);
       toast({
         title: 'Registration Failed',
-        description: error.message || 'Unable to create account. Please try again.',
+        description: error.message,
         variant: 'destructive',
       });
     } else {
-      console.log('Signup successful');
       toast({
-        title: 'Account Created Successfully!',
-        description: 'You can now log in with your credentials.',
-      });
-      // Switch to login tab and clear signup form
-      const loginTab = document.querySelector('[value="login"]') as HTMLElement;
-      loginTab?.click();
-      setSignupForm({
-        mobile: '',
-        pin: '',
-        full_name: '',
-        role: 'driver',
+        title: 'Registration Successful!',
+        description: 'Please check your email to verify your account.',
       });
     }
 
@@ -170,7 +89,7 @@ export const AuthPage = () => {
             Water Tanker Management
           </CardTitle>
           <CardDescription>
-            Login with your mobile number and PIN
+            Login to access your dashboard
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -183,43 +102,35 @@ export const AuthPage = () => {
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-mobile">Mobile Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="login-mobile"
-                      type="tel"
-                      placeholder="Enter your mobile number"
-                      className="pl-10"
-                      value={loginForm.mobile}
-                      onChange={(e) => setLoginForm({ ...loginForm, mobile: e.target.value.replace(/\D/g, '') })}
-                      required
-                      maxLength={15}
-                    />
-                  </div>
+                  <Label htmlFor="login-email">Email</Label>
+                  <Input
+                    id="login-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={loginForm.email}
+                    onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
+                    required
+                  />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-pin">PIN</Label>
+                  <Label htmlFor="login-password">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      id="login-pin"
-                      type={showPin ? 'text' : 'password'}
-                      placeholder="Enter your PIN"
-                      className="pl-10 pr-10"
-                      value={loginForm.pin}
-                      onChange={(e) => setLoginForm({ ...loginForm, pin: e.target.value.replace(/\D/g, '') })}
+                      id="login-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Enter your password"
+                      value={loginForm.password}
+                      onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                       required
-                      maxLength={6}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPin(!showPin)}
+                      onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPin ? (
+                      {showPassword ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
                         <Eye className="h-4 w-4" />
@@ -277,53 +188,53 @@ export const AuthPage = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="signup-mobile">Mobile Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="signup-mobile"
-                      type="tel"
-                      placeholder="Enter your mobile number"
-                      className="pl-10"
-                      value={signupForm.mobile}
-                      onChange={(e) => setSignupForm({ ...signupForm, mobile: e.target.value.replace(/\D/g, '') })}
-                      required
-                      maxLength={15}
-                    />
-                  </div>
+                  <Input
+                    id="signup-mobile"
+                    type="tel"
+                    placeholder="Enter your mobile number"
+                    value={signupForm.mobile_number}
+                    onChange={(e) => setSignupForm({ ...signupForm, mobile_number: e.target.value })}
+                    required
+                  />
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-pin">Create PIN</Label>
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    value={signupForm.email}
+                    onChange={(e) => setSignupForm({ ...signupForm, email: e.target.value })}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input
-                      id="signup-pin"
-                      type={showPin ? 'text' : 'password'}
-                      placeholder="Create a 4-6 digit PIN"
-                      className="pl-10 pr-10"
-                      value={signupForm.pin}
-                      onChange={(e) => setSignupForm({ ...signupForm, pin: e.target.value.replace(/\D/g, '') })}
+                      id="signup-password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Create a password"
+                      value={signupForm.password}
+                      onChange={(e) => setSignupForm({ ...signupForm, password: e.target.value })}
                       required
-                      minLength={4}
-                      maxLength={6}
                     />
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
                       className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPin(!showPin)}
+                      onClick={() => setShowPassword(!showPassword)}
                     >
-                      {showPin ? (
+                      {showPassword ? (
                         <EyeOff className="h-4 w-4" />
                       ) : (
                         <Eye className="h-4 w-4" />
                       )}
                     </Button>
                   </div>
-                  <p className="text-xs text-gray-500">
-                    Create a secure 4-6 digit PIN for login
-                  </p>
                 </div>
                 
                 <Button type="submit" className="w-full" disabled={isLoading}>

@@ -9,10 +9,6 @@ export const Header = () => {
 
   if (!user) return null;
 
-  // Extract mobile number from user metadata
-  const mobileNumber = user.user_metadata?.mobile_number;
-  const fullName = user.user_metadata?.full_name;
-
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 mb-8">
       <div className="container mx-auto px-4 py-4">
@@ -36,8 +32,8 @@ export const Header = () => {
           
           <div className="flex items-center gap-4">
             <div className="text-sm">
-              <p className="font-medium text-gray-900">{fullName}</p>
-              <p className="text-gray-500">{mobileNumber}</p>
+              <p className="font-medium text-gray-900">{user.user_metadata?.full_name || user.email}</p>
+              <p className="text-gray-500">{user.email}</p>
             </div>
             <Button variant="outline" size="sm" onClick={signOut}>
               <LogOut className="h-4 w-4 mr-2" />
