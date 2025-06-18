@@ -30,14 +30,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
 
   const fetchUserRole = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .single();
-    
-    if (!error && data) {
-      setUserRole(data.role);
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+      
+      if (!error && data) {
+        console.log('User role fetched:', data.role);
+        setUserRole(data.role);
+      } else {
+        console.log('Error fetching user role:', error);
+      }
+    } catch (err) {
+      console.log('Exception fetching user role:', err);
     }
   };
 
@@ -45,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -60,6 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('Initial session check:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -74,13 +83,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (mobile: string, pin: string) => {
+    console.log('Attempting sign in for mobile:', mobile);
     // Create a proper email format that Supabase will accept
     const email = `${mobile}@domain.com`;
     
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password: pin,
     });
+
+    if (error) {
+      console.log('Sign in error:', error);
+    } else {
+      console.log('Sign in successful:', data.user?.id);
+    }
+
     return { error };
   };
 
@@ -89,24 +106,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     pin: string, 
     userData: { full_name: string; role: 'driver' | 'admin' }
   ) => {
+    console.log('Attempting sign up for mobile:', mobile, 'role:', userData.role);
     // Create a proper email format that Supabase will accept
     const email = `${mobile}@domain.com`;
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password: pin,
       options: {
         data: {
           ...userData,
           mobile_number: mobile
-        }
+        },
+        emailRedirectTo: undefined // Disable email confirmation
       }
     });
+
+    if (error) {
+      console.log('Sign up error:', error);
+    } else {
+      console.log('Sign up successful:', data.user?.id);
+    }
+
     return { error };
   };
 
   const signOut = async () => {
+    console.log('Signing out...');
     await supabase.auth.signOut();
+    setUserRole(null);
   };
 
   const value = {

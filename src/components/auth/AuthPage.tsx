@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,17 @@ import { Truck, UserCog, Eye, EyeOff, Phone, Lock } from 'lucide-react';
 export const AuthPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPin, setShowPin] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      console.log('User already logged in, redirecting to dashboard');
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const [loginForm, setLoginForm] = useState({
     mobile: '',
@@ -32,17 +40,30 @@ export const AuthPage = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!loginForm.mobile || !loginForm.pin) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please enter both mobile number and PIN.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
+    console.log('Attempting login with mobile:', loginForm.mobile);
 
     const { error } = await signIn(loginForm.mobile, loginForm.pin);
 
     if (error) {
+      console.log('Login error:', error.message);
       toast({
         title: 'Login Failed',
         description: error.message,
         variant: 'destructive',
       });
     } else {
+      console.log('Login successful, navigating to dashboard');
       toast({
         title: 'Welcome back!',
         description: 'Successfully logged in.',
@@ -55,7 +76,18 @@ export const AuthPage = () => {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!signupForm.mobile || !signupForm.pin || !signupForm.full_name) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
+    console.log('Attempting signup with mobile:', signupForm.mobile, 'role:', signupForm.role);
 
     const { error } = await signUp(signupForm.mobile, signupForm.pin, {
       full_name: signupForm.full_name,
@@ -63,19 +95,28 @@ export const AuthPage = () => {
     });
 
     if (error) {
+      console.log('Signup error:', error.message);
       toast({
         title: 'Registration Failed',
         description: error.message,
         variant: 'destructive',
       });
     } else {
+      console.log('Signup successful');
       toast({
         title: 'Registration Successful!',
-        description: 'You can now login with your mobile number and PIN.',
+        description: 'Account created successfully. You can now login.',
       });
       // Switch to login tab
       const loginTab = document.querySelector('[value="login"]') as HTMLElement;
       loginTab?.click();
+      // Clear signup form
+      setSignupForm({
+        mobile: '',
+        pin: '',
+        full_name: '',
+        role: 'driver',
+      });
     }
 
     setIsLoading(false);
