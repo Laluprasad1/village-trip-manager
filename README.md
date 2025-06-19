@@ -1,73 +1,62 @@
-# Welcome to your Lovable project
+# 🚜 Water Tanker Management System
 
-## Project info
+A web-based platform to efficiently manage daily water tanker trips and tractor allocations to factories in villages. Built for union heads and tractor drivers to ensure fair distribution of trips, transparent record-keeping, and ease of coordination.
 
-**URL**: https://lovable.dev/projects/17210043-26c0-4c10-8977-5e10e87f9251
+---
 
-## How can I edit this code?
+## 🔧 Features
 
-There are several ways of editing your application.
+### 🧑‍✈️ Admin (Union Head)
+- Assign daily trips to tankers based on rotation and cutoff rules
+- Manage companies and schedule allocations
+- Track trip counts per driver for the current month
+- View and export trip reports (daily/monthly)
+- Enforce fair rotation: if a driver is absent, the next in serial order takes over
+- Role-based access control
 
-**Use Lovable**
+### 🚜 Driver
+- Login using mobile number (OTP)
+- View assigned company and trip count for the day
+- Accept or decline trip assignments
+- View personal trip statistics vs cutoff
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/17210043-26c0-4c10-8977-5e10e87f9251) and start prompting.
+### 🧠 Smart Logic
+- 100 tankers registered with unique serials (1 to 100)
+- Daily trip allotment based on:
+  - Number of trips required by a company
+  - Number of tankers to participate that day
+  - Fair rotation to meet monthly cutoff
+- Drivers' availability affects the serial; absentees are skipped
+- Tankers are not mutually assigned to multiple companies on the same day unless allowed
 
-Changes made via Lovable will be committed automatically to this repo.
+---
 
-**Use your preferred IDE**
+## 📸 Demo Screenshots
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+![Dashboard](./screenshots/dashboard.png)
+![Driver View](./screenshots/driver.png)
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## 🛠️ Tech Stack
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- **Frontend**: HTML, TailwindCSS, JavaScript
+- **Backend**: Supabase (Auth, Database, Storage)
+- **Hosting**: Vercel
+- **Auth**: Supabase OTP via Mobile Number
+- **Deployment**: GitHub → Vercel CI/CD
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🧾 Setup Instructions
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+# Clone this repo
+git clone https://github.com/your-username/village-trip-manager.git
+cd village-trip-manager
+
+# Install dependencies
+npm install
+
+# Run the app (if applicable)
 npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/17210043-26c0-4c10-8977-5e10e87f9251) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
