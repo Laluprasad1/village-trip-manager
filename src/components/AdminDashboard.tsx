@@ -33,12 +33,31 @@ export const AdminDashboard = () => {
   const pendingTrips = trips.filter(t => t.status === 'pending').length;
   const belowTargetCount = drivers.filter(d => d.monthly_trips < d.monthly_target).length;
 
-  // Transform companies data for TripAssignment component
+  // Transform data for AdminReports component
+  const transformedDrivers = drivers.map(driver => ({
+    id: driver.id,
+    serialNumber: driver.serial_number,
+    name: driver.profile?.full_name || 'Unknown',
+    isAvailable: driver.is_available || false,
+    monthlyTrips: driver.monthly_trips || 0,
+    monthlyTarget: driver.monthly_target || 20,
+    isOnline: driver.is_online || false
+  }));
+
+  const transformedTrips = trips.map(trip => ({
+    id: trip.id,
+    driverId: trip.driver_id || '',
+    company: trip.company_name,
+    date: trip.trip_date,
+    status: trip.status as 'pending' | 'accepted' | 'declined' | 'completed',
+    assignedAt: trip.assigned_at || trip.created_at || ''
+  }));
+
   const transformedCompanies = companies.map(company => ({
     name: company.name,
-    tripsRequested: company.trips_requested,
-    vehiclesAssigned: company.vehicles_assigned,
-    date: company.assignment_date
+    tripsRequested: company.trips_requested || 0,
+    vehiclesAssigned: company.vehicles_assigned || 0,
+    date: company.assignment_date || ''
   }));
 
   return (
@@ -124,7 +143,11 @@ export const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="reports" className="animate-scale-in">
-            <AdminReports />
+            <AdminReports 
+              drivers={transformedDrivers}
+              trips={transformedTrips}
+              companies={transformedCompanies}
+            />
           </TabsContent>
         </Tabs>
       </div>
