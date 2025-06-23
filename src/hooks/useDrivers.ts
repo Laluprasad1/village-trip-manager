@@ -47,7 +47,7 @@ export const useDrivers = () => {
 
       return data?.map(driver => ({
         ...driver,
-        profile: driver.profiles
+        profile: Array.isArray(driver.profiles) ? driver.profiles[0] : driver.profiles
       })) || [];
     },
     enabled: !!userRole

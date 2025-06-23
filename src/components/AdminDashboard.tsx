@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,168 +8,28 @@ import { AdminReports } from "@/components/AdminReports";
 import { TodayAssignments } from "@/components/TodayAssignments";
 import { Badge } from "@/components/ui/badge";
 import { Truck, Users, Calendar, BarChart3 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-
-interface Driver {
-  id: string;
-  serialNumber: number;
-  name: string;
-  isAvailable: boolean;
-  monthlyTrips: number;
-  monthlyTarget: number;
-  isOnline: boolean;
-}
-
-interface Trip {
-  id: string;
-  driverId: string;
-  company: string;
-  date: string;
-  status: 'pending' | 'accepted' | 'declined' | 'completed';
-  assignedAt: string;
-}
-
-interface Company {
-  name: string;
-  tripsRequested: number;
-  vehiclesAssigned: number;
-  date: string;
-}
-
-// Generate 100 drivers with realistic names
-const generateDrivers = (): Driver[] => {
-  const names = [
-    "Ram Kumar", "Shyam Singh", "Gita Devi", "Mohan Lal", "Sita Kumari",
-    "Arjun Sharma", "Priya Yadav", "Vikash Gupta", "Sunita Joshi", "Rajesh Verma",
-    "Kavita Patel", "Suresh Thakur", "Anita Mishra", "Deepak Roy", "Meera Shah",
-    "Amit Agarwal", "Pooja Sinha", "Ravi Kumar", "Nisha Pandey", "Gopal Das",
-    "Sarita Devi", "Mukesh Jha", "Rekha Singh", "Vijay Tiwari", "Usha Gupta",
-    "Manoj Rai", "Seema Sharma", "Prakash Yadav", "Lalita Kumari", "Ashok Verma",
-    "Pushpa Devi", "Ramesh Kumar", "Kiran Joshi", "Sunil Pandey", "Radha Singh",
-    "Dinesh Gupta", "Manju Devi", "Santosh Kumar", "Geeta Sharma", "Anil Yadav",
-    "Savita Singh", "Bharat Lal", "Sushma Kumari", "Naresh Verma", "Kamala Devi",
-    "Rajendra Singh", "Sudha Gupta", "Mahesh Kumar", "Shanti Devi", "Pawan Sharma"
-  ];
-  
-  return Array.from({ length: 100 }, (_, index) => ({
-    id: (index + 1).toString(),
-    serialNumber: index + 1,
-    name: names[index % names.length] + (index >= names.length ? ` ${Math.floor(index / names.length) + 1}` : ''),
-    isAvailable: true,
-    monthlyTrips: Math.floor(Math.random() * 25),
-    monthlyTarget: 20,
-    isOnline: Math.random() > 0.2 // 80% online
-  }));
-};
+import { useDrivers } from "@/hooks/useDrivers";
+import { useTrips } from "@/hooks/useTrips";
+import { useCompanies } from "@/hooks/useCompanies";
 
 export const AdminDashboard = () => {
-  const [drivers, setDrivers] = useState<Driver[]>(generateDrivers());
-  const [trips, setTrips] = useState<Trip[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const { toast } = useToast();
+  const { drivers, isLoading: driversLoading } = useDrivers();
+  const { trips, isLoading: tripsLoading } = useTrips();
+  const { companies, isLoading: companiesLoading } = useCompanies();
 
-  const addDriver = (name: string) => {
-    const newSerial = Math.max(...drivers.map(d => d.serialNumber)) + 1;
-    const newDriver: Driver = {
-      id: Date.now().toString(),
-      serialNumber: newSerial,
-      name,
-      isAvailable: true,
-      monthlyTrips: 0,
-      monthlyTarget: 20,
-      isOnline: true
-    };
-    setDrivers([...drivers, newDriver]);
-    toast({
-      title: "Driver Added",
-      description: `${name} has been registered with serial #${newSerial}`,
-    });
-  };
+  if (driversLoading || tripsLoading || companiesLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
-  const updateDriver = (driverId: string, updates: Partial<Driver>) => {
-    setDrivers(drivers.map(driver => 
-      driver.id === driverId 
-        ? { ...driver, ...updates }
-        : driver
-    ));
-  };
-
-  const toggleDriverAvailability = (driverId: string) => {
-    setDrivers(drivers.map(driver => 
-      driver.id === driverId 
-        ? { ...driver, isOnline: !driver.isOnline }
-        : driver
-    ));
-  };
-
-  const assignTrips = (companyName: string, totalTrips: number, vehiclesNeeded: number) => {
-    const today = new Date().toISOString().split('T')[0];
-    const availableDrivers = drivers
-      .filter(d => d.isOnline)
-      .sort((a, b) => a.serialNumber - b.serialNumber);
-
-    if (availableDrivers.length < vehiclesNeeded) {
-      toast({
-        title: "Insufficient Drivers",
-        description: `Only ${availableDrivers.length} drivers available, need ${vehiclesNeeded}`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    const selectedDrivers = availableDrivers.slice(0, vehiclesNeeded);
-    const newTrips: Trip[] = selectedDrivers.map(driver => ({
-      id: Date.now() + Math.random().toString(),
-      driverId: driver.id,
-      company: companyName,
-      date: today,
-      status: 'pending' as const,
-      assignedAt: new Date().toISOString()
-    }));
-
-    setTrips([...trips, ...newTrips]);
-    setCompanies([...companies, {
-      name: companyName,
-      tripsRequested: totalTrips,
-      vehiclesAssigned: vehiclesNeeded,
-      date: today
-    }]);
-
-    toast({
-      title: "Trips Assigned",
-      description: `Assigned ${vehiclesNeeded} vehicles to ${companyName}`,
-    });
-  };
-
-  const handleTripResponse = (tripId: string, response: 'accepted' | 'declined') => {
-    setTrips(trips.map(trip => 
-      trip.id === tripId 
-        ? { ...trip, status: response }
-        : trip
-    ));
-
-    if (response === 'accepted') {
-      const trip = trips.find(t => t.id === tripId);
-      if (trip) {
-        setDrivers(drivers.map(driver => 
-          driver.id === trip.driverId 
-            ? { ...driver, monthlyTrips: driver.monthlyTrips + 1 }
-            : driver
-        ));
-      }
-    }
-
-    const trip = trips.find(t => t.id === tripId);
-    toast({
-      title: `Trip ${response}`,
-      description: trip ? `Trip to ${trip.company} has been ${response}` : '',
-    });
-  };
-
-  const onlineCount = drivers.filter(d => d.isOnline).length;
-  const todayTrips = trips.filter(t => t.date === new Date().toISOString().split('T')[0]).length;
+  const onlineCount = drivers.filter(d => d.is_online).length;
+  const today = new Date().toISOString().split('T')[0];
+  const todayTrips = trips.filter(t => t.trip_date === today).length;
   const pendingTrips = trips.filter(t => t.status === 'pending').length;
-  const belowTargetCount = drivers.filter(d => d.monthlyTrips < d.monthlyTarget).length;
+  const belowTargetCount = drivers.filter(d => d.monthly_trips < d.monthly_target).length;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 animate-fade-in">
@@ -190,7 +51,7 @@ export const AdminDashboard = () => {
               <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{onlineCount}/100</div>
+              <div className="text-2xl font-bold text-green-600">{onlineCount}/{drivers.length}</div>
               <p className="text-xs text-muted-foreground">Available for assignment</p>
             </CardContent>
           </Card>
@@ -231,30 +92,22 @@ export const AdminDashboard = () => {
 
         {/* Today's Assignments */}
         <div className="mb-8">
-          <TodayAssignments drivers={drivers} trips={trips} companies={companies} />
+          <TodayAssignments />
         </div>
 
         <Tabs defaultValue="fleet" className="w-full animate-fade-in" style={{ animationDelay: '0.5s' }}>
-          <TabsList className="grid w-full grid-cols-4 mb-6 transition-all duration-300">
+          <TabsList className="grid w-full grid-cols-3 mb-6 transition-all duration-300">
             <TabsTrigger value="fleet" className="transition-all duration-200 hover:scale-105">Fleet Management</TabsTrigger>
             <TabsTrigger value="assignment" className="transition-all duration-200 hover:scale-105">Trip Assignment</TabsTrigger>
             <TabsTrigger value="reports" className="transition-all duration-200 hover:scale-105">Reports</TabsTrigger>
           </TabsList>
 
           <TabsContent value="fleet" className="animate-scale-in">
-            <TractorRegistration 
-              drivers={drivers}
-              onAddDriver={addDriver}
-              onUpdateDriver={updateDriver}
-              onToggleAvailability={toggleDriverAvailability}
-            />
+            <TractorRegistration />
           </TabsContent>
 
           <TabsContent value="assignment" className="animate-scale-in">
-            <TripAssignment 
-              onAssignTrips={assignTrips}
-              companies={companies}
-            />
+            <TripAssignment />
           </TabsContent>
 
           <TabsContent value="reports" className="animate-scale-in">
