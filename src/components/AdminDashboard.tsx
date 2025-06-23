@@ -60,6 +60,17 @@ export const AdminDashboard = () => {
     date: company.assignment_date || ''
   }));
 
+  // Wrapper function to match TripAssignment component's expected signature
+  const handleAssignTrips = (company: string, totalTrips: number, vehiclesNeeded: number) => {
+    const today = new Date().toISOString().split('T')[0];
+    assignTrips({
+      companyName: company,
+      totalTrips,
+      vehiclesNeeded,
+      assignmentDate: today
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 animate-fade-in">
       <div className="container mx-auto px-4 py-8">
@@ -137,7 +148,7 @@ export const AdminDashboard = () => {
 
           <TabsContent value="assignment" className="animate-scale-in">
             <TripAssignment 
-              onAssignTrips={assignTrips}
+              onAssignTrips={handleAssignTrips}
               companies={transformedCompanies}
             />
           </TabsContent>
