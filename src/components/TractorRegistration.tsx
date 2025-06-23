@@ -5,123 +5,65 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Plus, Truck, Search, AlertTriangle, Edit, Save, X } from "lucide-react";
+import { Plus, Truck, Search, AlertTriangle, Trash2 } from "lucide-react";
+import { useDrivers } from "@/hooks/useDrivers";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
-interface Driver {
-  id: string;
-  serialNumber: number;
-  name: string;
-  isAvailable: boolean;
-  monthlyTrips: number;
-  monthlyTarget: number;
-  isOnline: boolean;
-}
-
-interface TractorRegistrationProps {
-  drivers: Driver[];
-  onAddDriver: (name: string) => void;
-  onUpdateDriver: (driverId: string, updates: Partial<Driver>) => void;
-  onToggleAvailability: (driverId: string) => void;
-}
-
-export const TractorRegistration = ({ drivers, onAddDriver, onUpdateDriver, onToggleAvailability }: TractorRegistrationProps) => {
-  const [newDriverName, setNewDriverName] = useState("");
+export const TractorRegistration = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingDriver, setEditingDriver] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<{ name: string; monthlyTarget: number }>({ name: "", monthlyTarget: 20 });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newDriverName.trim()) {
-      onAddDriver(newDriverName.trim());
-      setNewDriverName("");
-    }
-  };
-
-  const startEdit = (driver: Driver) => {
-    setEditingDriver(driver.id);
-    setEditForm({ name: driver.name, monthlyTarget: driver.monthlyTarget });
-  };
-
-  const saveEdit = () => {
-    if (editingDriver) {
-      onUpdateDriver(editingDriver, {
-        name: editForm.name,
-        monthlyTarget: editForm.monthlyTarget
-      });
-      setEditingDriver(null);
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingDriver(null);
-    setEditForm({ name: "", monthlyTarget: 20 });
-  };
+  const { drivers, isLoading, toggleAvailability, deleteDriver, canDelete } = useDrivers();
+  const { userRole } = useAuth();
 
   const filteredDrivers = drivers.filter(driver =>
-    driver.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    driver.serialNumber.toString().includes(searchTerm)
+    driver.profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    driver.serial_number.toString().includes(searchTerm)
   );
 
-  const onlineCount = drivers.filter(d => d.isOnline).length;
-  const belowTargetCount = drivers.filter(d => d.monthlyTrips < d.monthlyTarget).length;
+  const onlineCount = drivers.filter(d => d.is_online).length;
+  const belowTargetCount = drivers.filter(d => d.monthly_trips < d.monthly_target).length;
+
+  const handleDeleteDriver = (driverId: string) => {
+    if (window.confirm('Are you sure you want to remove this driver?')) {
+      deleteDriver(driverId);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {/* Quick Actions Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="transition-all duration-300 hover:shadow-lg animate-slide-in-right" style={{ animationDelay: '0.1s' }}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5 transition-transform duration-200 group-hover:rotate-90" />
-              Add New Driver
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="flex gap-3">
-              <Input
-                placeholder="Driver Name"
-                value={newDriverName}
-                onChange={(e) => setNewDriverName(e.target.value)}
-                className="flex-1 transition-all duration-200 focus:scale-105"
-              />
-              <Button 
-                type="submit" 
-                disabled={!newDriverName.trim()}
-                className="transition-all duration-200 hover:scale-105 disabled:opacity-50"
-              >
-                Add
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card className="transition-all duration-300 hover:shadow-lg animate-slide-in-right" style={{ animationDelay: '0.2s' }}>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Search className="h-5 w-5" />
-              Search Fleet
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Input
-              placeholder="Search by name or serial..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="transition-all duration-200 focus:scale-105"
-            />
-          </CardContent>
-        </Card>
-      </div>
+      {/* Search */}
+      <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Search className="h-5 w-5" />
+            Search Fleet
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Input
+            placeholder="Search by name or serial..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="transition-all duration-200 focus:scale-105"
+          />
+        </CardContent>
+      </Card>
 
       {/* Fleet Overview */}
-      <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '0.3s' }}>
+      <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in">
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Truck className="h-5 w-5" />
-              Fleet Status ({drivers.length}/100)
+              Fleet Status ({drivers.length} drivers)
             </div>
             <div className="flex gap-2">
               <Badge variant="default" className="animate-pulse">{onlineCount} Online</Badge>
@@ -133,102 +75,78 @@ export const TractorRegistration = ({ drivers, onAddDriver, onUpdateDriver, onTo
               )}
             </div>
           </CardTitle>
+          <CardDescription>
+            {userRole === 'driver' ? 'View fleet status and assignments' : 'Manage your fleet and assignments'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3 max-h-96 overflow-y-auto">
-            {filteredDrivers.map((driver, index) => (
-              <div 
-                key={driver.id} 
-                className="flex items-center justify-between p-4 border rounded-lg bg-white hover:shadow-md transition-all duration-300 hover:scale-[1.02] animate-fade-in"
-                style={{ animationDelay: `${0.1 * index}s` }}
-              >
-                <div className="flex items-center space-x-4">
-                  <Badge variant="outline" className="font-mono text-base px-3 py-1 transition-all duration-200 hover:scale-110">
-                    #{driver.serialNumber.toString().padStart(3, '0')}
-                  </Badge>
-                  
-                  {editingDriver === driver.id ? (
-                    <div className="space-y-2">
-                      <Input
-                        value={editForm.name}
-                        onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-48"
-                        placeholder="Driver Name"
-                      />
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm">Target:</span>
-                        <Input
-                          type="number"
-                          value={editForm.monthlyTarget}
-                          onChange={(e) => setEditForm({ ...editForm, monthlyTarget: parseInt(e.target.value) || 20 })}
-                          className="w-20"
-                          min="1"
-                        />
-                        <span className="text-sm text-muted-foreground">trips/month</span>
-                      </div>
-                    </div>
-                  ) : (
+          {drivers.length === 0 ? (
+            <div className="text-center py-8">
+              <Truck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">No drivers registered yet. Drivers will appear here when they register.</p>
+            </div>
+          ) : (
+            <div className="grid gap-3 max-h-96 overflow-y-auto">
+              {filteredDrivers.map((driver, index) => (
+                <div 
+                  key={driver.id} 
+                  className="flex items-center justify-between p-4 border rounded-lg bg-white hover:shadow-md transition-all duration-300 hover:scale-[1.02] animate-fade-in"
+                  style={{ animationDelay: `${0.1 * index}s` }}
+                >
+                  <div className="flex items-center space-x-4">
+                    <Badge variant="outline" className="font-mono text-base px-3 py-1 transition-all duration-200 hover:scale-110">
+                      #{driver.serial_number.toString().padStart(3, '0')}
+                    </Badge>
+                    
                     <div>
-                      <p className="font-medium text-lg transition-colors duration-200 hover:text-blue-600">{driver.name}</p>
+                      <p className="font-medium text-lg transition-colors duration-200 hover:text-blue-600">
+                        {driver.profile?.full_name || 'Unknown Driver'}
+                      </p>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-sm text-muted-foreground">
-                          {driver.monthlyTrips}/{driver.monthlyTarget} trips
+                          {driver.monthly_trips}/{driver.monthly_target} trips
                         </span>
-                        {driver.monthlyTrips < driver.monthlyTarget && (
+                        {driver.monthly_trips < driver.monthly_target && (
                           <Badge variant="destructive" className="text-xs animate-pulse">
-                            {driver.monthlyTarget - driver.monthlyTrips} behind
+                            {driver.monthly_target - driver.monthly_trips} behind
                           </Badge>
                         )}
                       </div>
+                      <span className="text-xs text-muted-foreground">
+                        {driver.profile?.mobile_number}
+                      </span>
                     </div>
-                  )}
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                  {editingDriver === driver.id ? (
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        size="sm"
-                        onClick={saveEdit}
-                        className="transition-all duration-200 hover:scale-105"
-                      >
-                        <Save className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={cancelEdit}
-                        className="transition-all duration-200 hover:scale-105"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => startEdit(driver)}
-                      className="transition-all duration-200 hover:scale-105"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                  )}
-                  
-                  <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium transition-colors duration-200">
-                      {driver.isOnline ? "Online" : "Offline"}
-                    </span>
-                    <Switch
-                      checked={driver.isOnline}
-                      onCheckedChange={() => onToggleAvailability(driver.id)}
-                      className="transition-all duration-200 hover:scale-110"
-                    />
                   </div>
-                  <div className={`w-3 h-3 rounded-full transition-all duration-300 ${driver.isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
+                  
+                  <div className="flex items-center space-x-4">
+                    {canDelete && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteDriver(driver.id)}
+                        className="transition-all duration-200 hover:scale-105"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    <div className="flex items-center space-x-3">
+                      <span className="text-sm font-medium transition-colors duration-200">
+                        {driver.is_online ? "Online" : "Offline"}
+                      </span>
+                      <Switch
+                        checked={driver.is_online}
+                        onCheckedChange={() => toggleAvailability(driver.id)}
+                        className="transition-all duration-200 hover:scale-110"
+                        disabled={userRole === 'driver'}
+                      />
+                    </div>
+                    <div className={`w-3 h-3 rounded-full transition-all duration-300 ${driver.is_online ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} />
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

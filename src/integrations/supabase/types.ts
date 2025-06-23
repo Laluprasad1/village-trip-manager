@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      companies: {
+        Row: {
+          assignment_date: string | null
+          created_at: string | null
+          id: string
+          name: string
+          trips_requested: number | null
+          vehicles_assigned: number | null
+        }
+        Insert: {
+          assignment_date?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          trips_requested?: number | null
+          vehicles_assigned?: number | null
+        }
+        Update: {
+          assignment_date?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          trips_requested?: number | null
+          vehicles_assigned?: number | null
+        }
+        Relationships: []
+      }
       drivers: {
         Row: {
           created_at: string | null
@@ -71,6 +98,44 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      trips: {
+        Row: {
+          assigned_at: string | null
+          company_name: string
+          created_at: string | null
+          driver_id: string | null
+          id: string
+          status: string | null
+          trip_date: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          company_name: string
+          created_at?: string | null
+          driver_id?: string | null
+          id?: string
+          status?: string | null
+          trip_date: string
+        }
+        Update: {
+          assigned_at?: string | null
+          company_name?: string
+          created_at?: string | null
+          driver_id?: string | null
+          id?: string
+          status?: string | null
+          trip_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

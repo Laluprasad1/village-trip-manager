@@ -1,0 +1,70 @@
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { toast } from 'sonner';
+
+export interface Trip {
+  id: string;
+  driver_id: string;
+  company_name: string;
+  trip_date: string;
+  status: 'pending' | 'accepted' | 'declined' | 'completed';
+  assigned_at: string;
+  created_at: string;
+}
+
+export const useTrips = () => {
+  const { userRole, user } = useAuth();
+  const queryClient = useQueryClient();
+
+  const { data: trips = [], isLoading } = useQuery({
+    queryKey: ['trips'],
+    queryFn: async () => {
+      console.log('Fetching trips...');
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching trips:', error);
+        throw error;
+      }
+
+      return data || [];
+    },
+    enabled: !!user
+  });
+
+  const updateTripStatusMutation = useMutation({
+    mutationFn: async ({ tripId, status }: { tripId: string; status: string }) => {
+      console.log('Updating trip status:', tripId, status);
+      const { error } = await supabase
+        .from('trips')
+        .update({ status })
+        .eq('id', tripId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+      toast.success('Trip status updated successfully');
+    },
+    onError: (error) => {
+      console.error('Error updating trip status:', error);
+      toast.error('Failed to update trip status');
+    }
+  });
+
+  const updateTripStatus = (tripId: string, status: string) => {
+    updateTripStatusMutation.mutate({ tripId, status });
+  };
+
+  return {
+    trips,
+    isLoading,
+    updateTripStatus,
+    canManageTrips: userRole === 'admin'
+  };
+};
