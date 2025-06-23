@@ -11,11 +11,13 @@ import { Truck, Users, Calendar, BarChart3 } from "lucide-react";
 import { useDrivers } from "@/hooks/useDrivers";
 import { useTrips } from "@/hooks/useTrips";
 import { useCompanies } from "@/hooks/useCompanies";
+import { useTripAssignment } from "@/hooks/useTripAssignment";
 
 export const AdminDashboard = () => {
   const { drivers, isLoading: driversLoading } = useDrivers();
   const { trips, isLoading: tripsLoading } = useTrips();
   const { companies, isLoading: companiesLoading } = useCompanies();
+  const { assignTrips } = useTripAssignment();
 
   if (driversLoading || tripsLoading || companiesLoading) {
     return (
@@ -30,6 +32,14 @@ export const AdminDashboard = () => {
   const todayTrips = trips.filter(t => t.trip_date === today).length;
   const pendingTrips = trips.filter(t => t.status === 'pending').length;
   const belowTargetCount = drivers.filter(d => d.monthly_trips < d.monthly_target).length;
+
+  // Transform companies data for TripAssignment component
+  const transformedCompanies = companies.map(company => ({
+    name: company.name,
+    tripsRequested: company.trips_requested,
+    vehiclesAssigned: company.vehicles_assigned,
+    date: company.assignment_date
+  }));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 animate-fade-in">
@@ -107,15 +117,14 @@ export const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="assignment" className="animate-scale-in">
-            <TripAssignment />
+            <TripAssignment 
+              onAssignTrips={assignTrips}
+              companies={transformedCompanies}
+            />
           </TabsContent>
 
           <TabsContent value="reports" className="animate-scale-in">
-            <AdminReports 
-              drivers={drivers}
-              trips={trips}
-              companies={companies}
-            />
+            <AdminReports />
           </TabsContent>
         </Tabs>
       </div>

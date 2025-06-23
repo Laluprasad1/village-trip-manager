@@ -13,6 +13,8 @@ export interface Driver {
   monthly_target: number;
   is_available: boolean;
   is_online: boolean;
+  created_at: string;
+  updated_at: string;
   profile?: {
     full_name: string;
     email: string;

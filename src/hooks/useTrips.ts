@@ -57,14 +57,38 @@ export const useTrips = () => {
     }
   });
 
+  const createTripMutation = useMutation({
+    mutationFn: async (trip: Omit<Trip, 'id' | 'created_at' | 'assigned_at'>) => {
+      console.log('Creating trip:', trip);
+      const { error } = await supabase
+        .from('trips')
+        .insert([trip]);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['trips'] });
+      toast.success('Trip assigned successfully');
+    },
+    onError: (error) => {
+      console.error('Error creating trip:', error);
+      toast.error('Failed to assign trip');
+    }
+  });
+
   const updateTripStatus = (tripId: string, status: string) => {
     updateTripStatusMutation.mutate({ tripId, status });
+  };
+
+  const createTrip = (trip: Omit<Trip, 'id' | 'created_at' | 'assigned_at'>) => {
+    createTripMutation.mutate(trip);
   };
 
   return {
     trips,
     isLoading,
     updateTripStatus,
+    createTrip,
     canManageTrips: userRole === 'admin'
   };
 };
