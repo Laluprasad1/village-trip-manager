@@ -1,5 +1,4 @@
 
-import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,27 +29,35 @@ export const useDrivers = () => {
     queryKey: ['drivers'],
     queryFn: async () => {
       console.log('Fetching drivers...');
-      const { data, error } = await supabase
+      
+      // First get drivers
+      const { data: driversData, error: driversError } = await supabase
         .from('drivers')
-        .select(`
-          *,
-          profiles!inner(
-            full_name,
-            email,
-            mobile_number
-          )
-        `)
+        .select('*')
         .order('serial_number');
 
-      if (error) {
-        console.error('Error fetching drivers:', error);
-        throw error;
+      if (driversError) {
+        console.error('Error fetching drivers:', driversError);
+        throw driversError;
       }
 
-      return data?.map(driver => ({
-        ...driver,
-        profile: Array.isArray(driver.profiles) ? driver.profiles[0] : driver.profiles
-      })) || [];
+      // Then get profiles for each driver
+      const driversWithProfiles = await Promise.all(
+        (driversData || []).map(async (driver) => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name, email, mobile_number')
+            .eq('id', driver.user_id)
+            .single();
+
+          return {
+            ...driver,
+            profile: profile || null
+          };
+        })
+      );
+
+      return driversWithProfiles;
     },
     enabled: !!userRole
   });

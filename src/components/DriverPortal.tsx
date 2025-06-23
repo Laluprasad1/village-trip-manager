@@ -1,201 +1,211 @@
 
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Truck, Clock, CheckCircle, XCircle, MapPin, Target } from "lucide-react";
-import { useDrivers } from "@/hooks/useDrivers";
-import { useTrips } from "@/hooks/useTrips";
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { CheckCircle, XCircle, Clock, Truck, Target } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useDrivers } from '@/hooks/useDrivers';
+import { useTrips } from '@/hooks/useTrips';
 
 export const DriverPortal = () => {
   const { user } = useAuth();
-  const { drivers } = useDrivers();
-  const { trips, updateTripStatus } = useTrips();
+  const { drivers, isLoading: driversLoading } = useDrivers();
+  const { trips, updateTripStatus, isLoading: tripsLoading } = useTrips();
+
+  if (driversLoading || tripsLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   // Find current driver
   const currentDriver = drivers.find(d => d.user_id === user?.id);
   
-  // Get today's trips for current driver
-  const today = new Date().toISOString().split('T')[0];
-  const todayTrips = trips.filter(t => 
-    t.driver_id === currentDriver?.id && t.trip_date === today
-  );
-
-  const handleAcceptTrip = (tripId: string) => {
-    updateTripStatus(tripId, 'accepted');
-  };
-
-  const handleDeclineTrip = (tripId: string) => {
-    updateTripStatus(tripId, 'declined');
-  };
-
   if (!currentDriver) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
-        <Card>
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">Driver profile not found. Please contact admin.</p>
-          </CardContent>
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Access Denied</CardTitle>
+            <CardDescription>
+              Driver profile not found. Please contact your administrator.
+            </CardDescription>
+          </CardHeader>
         </Card>
       </div>
     );
   }
 
+  // Get today's trips for this driver
+  const today = new Date().toISOString().split('T')[0];
+  const todayTrips = trips.filter(t => 
+    t.driver_id === currentDriver.id && 
+    t.trip_date === today
+  );
+
+  // Get monthly progress
+  const monthlyProgress = (currentDriver.monthly_trips / currentDriver.monthly_target) * 100;
+
+  const handleTripResponse = (tripId: string, status: 'accepted' | 'declined') => {
+    updateTripStatus(tripId, status);
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'accepted':
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'declined':
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      case 'completed':
+        return <CheckCircle className="h-4 w-4 text-blue-600" />;
+      default:
+        return <Clock className="h-4 w-4 text-orange-600" />;
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'accepted':
+        return 'bg-green-100 text-green-800';
+      case 'declined':
+        return 'bg-red-100 text-red-800';
+      case 'completed':
+        return 'bg-blue-100 text-blue-800';
+      default:
+        return 'bg-orange-100 text-orange-800';
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 animate-fade-in">
       <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
+        <div className="text-center mb-8 animate-scale-in">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Driver Portal
           </h1>
           <p className="text-lg text-muted-foreground">
-            Welcome back, {currentDriver.profile?.full_name || 'Driver'}
+            Welcome, {currentDriver.profile?.full_name || 'Driver'}!
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Today's Assignment */}
-          <Card className="hover:shadow-lg transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MapPin className="h-5 w-5" />
-                Today's Assignment
-              </CardTitle>
-              <CardDescription>
-                {new Date().toLocaleDateString()}
-              </CardDescription>
+        {/* Driver Info Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <Card className="hover-scale transition-all duration-300 hover:shadow-lg animate-fade-in">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Serial Number</CardTitle>
+              <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              {todayTrips.length > 0 ? (
-                <div className="space-y-4">
-                  {todayTrips.map((trip) => (
-                    <div key={trip.id} className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-lg">{trip.company_name}</h3>
-                        <Badge variant="outline" className="font-mono">
-                          Serial #{currentDriver.serial_number.toString().padStart(3, '0')}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 mb-4">
-                        <Truck className="h-4 w-4 text-blue-600" />
-                        <span className="font-mono font-semibold">
-                          Serial #{currentDriver.serial_number.toString().padStart(3, '0')}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-2 mb-4">
-                        <Clock className="h-4 w-4 text-gray-500" />
-                        <span className="text-sm text-gray-600">
-                          Assigned at: {new Date(trip.assigned_at).toLocaleTimeString()}
-                        </span>
-                      </div>
-
-                      {trip.status === 'pending' && (
-                        <div className="flex gap-3">
-                          <Button 
-                            onClick={() => handleAcceptTrip(trip.id)}
-                            className="flex-1 bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Accept Trip
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => handleDeclineTrip(trip.id)}
-                            className="flex-1 border-red-200 text-red-600 hover:bg-red-50"
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Decline
-                          </Button>
-                        </div>
-                      )}
-
-                      {trip.status === 'accepted' && (
-                        <Badge className="bg-green-100 text-green-800 border-green-200">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Accepted
-                        </Badge>
-                      )}
-
-                      {trip.status === 'declined' && (
-                        <Badge variant="destructive">
-                          <XCircle className="h-3 w-3 mr-1" />
-                          Declined
-                        </Badge>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-500">No assignment for today</p>
-                </div>
-              )}
+              <div className="text-2xl font-bold text-blue-600">#{currentDriver.serial_number}</div>
+              <p className="text-xs text-muted-foreground">Your position in queue</p>
             </CardContent>
           </Card>
 
-          {/* Monthly Progress */}
-          <Card className="hover:shadow-lg transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Target className="h-5 w-5" />
-                Monthly Progress
-              </CardTitle>
-              <CardDescription>
-                Track your monthly trip completion
-              </CardDescription>
+          <Card className="hover-scale transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '0.1s' }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Monthly Trips</CardTitle>
+              <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="space-y-6">
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">Trips Completed</span>
-                    <span className="text-sm text-gray-500">
-                      {currentDriver.monthly_trips} / {currentDriver.monthly_target}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ 
-                        width: `${Math.min((currentDriver.monthly_trips / currentDriver.monthly_target) * 100, 100)}%` 
-                      }}
-                    ></div>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {Math.round((currentDriver.monthly_trips / currentDriver.monthly_target) * 100)}% complete
-                  </p>
-                </div>
+              <div className="text-2xl font-bold text-green-600">
+                {currentDriver.monthly_trips}/{currentDriver.monthly_target}
+              </div>
+              <Progress value={monthlyProgress} className="mt-2" />
+              <p className="text-xs text-muted-foreground mt-1">
+                {Math.round(monthlyProgress)}% complete
+              </p>
+            </CardContent>
+          </Card>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                    <div className="text-2xl font-bold text-green-600">
-                      {currentDriver.monthly_trips}
-                    </div>
-                    <div className="text-sm text-green-600">Completed</div>
-                  </div>
-                  <div className="text-center p-4 bg-orange-50 rounded-lg border border-orange-200">
-                    <div className="text-2xl font-bold text-orange-600">
-                      {Math.max(0, currentDriver.monthly_target - currentDriver.monthly_trips)}
-                    </div>
-                    <div className="text-sm text-orange-600">Remaining</div>
-                  </div>
-                </div>
-
-                {currentDriver.monthly_trips >= currentDriver.monthly_target && (
-                  <div className="text-center p-4 bg-green-100 rounded-lg border border-green-300">
-                    <CheckCircle className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                    <p className="text-green-700 font-medium">
-                      🎉 Monthly target achieved!
-                    </p>
-                  </div>
-                )}
+          <Card className="hover-scale transition-all duration-300 hover:shadow-lg animate-fade-in" style={{ animationDelay: '0.2s' }}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Status</CardTitle>
+              <Badge variant={currentDriver.is_online ? "default" : "secondary"}>
+                {currentDriver.is_online ? "Online" : "Offline"}
+              </Badge>
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm">
+                <p className={`font-medium ${currentDriver.is_available ? 'text-green-600' : 'text-red-600'}`}>
+                  {currentDriver.is_available ? 'Available' : 'Unavailable'}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  for trip assignments
+                </p>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Today's Assignments */}
+        <Card className="animate-fade-in" style={{ animationDelay: '0.3s' }}>
+          <CardHeader>
+            <CardTitle>Today's Assignments ({today})</CardTitle>
+            <CardDescription>
+              Your trip assignments for today
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {todayTrips.length === 0 ? (
+              <div className="text-center py-8">
+                <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">No trips assigned for today</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {todayTrips.map((trip) => (
+                  <Card key={trip.id} className="border-l-4 border-l-blue-500">
+                    <CardContent className="pt-6">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{trip.company_name}</h3>
+                            <Badge className={getStatusColor(trip.status)}>
+                              <div className="flex items-center gap-1">
+                                {getStatusIcon(trip.status)}
+                                {trip.status}
+                              </div>
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            Assigned at: {new Date(trip.assigned_at || trip.created_at).toLocaleTimeString()}
+                          </p>
+                        </div>
+                        
+                        {trip.status === 'pending' && (
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-green-500 text-green-600 hover:bg-green-50"
+                              onClick={() => handleTripResponse(trip.id, 'accepted')}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="border-red-500 text-red-600 hover:bg-red-50"
+                              onClick={() => handleTripResponse(trip.id, 'declined')}
+                            >
+                              <XCircle className="h-4 w-4 mr-1" />
+                              Decline
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

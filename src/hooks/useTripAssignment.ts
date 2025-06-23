@@ -4,13 +4,22 @@ import { useTrips } from './useTrips';
 import { useCompanies } from './useCompanies';
 import { toast } from 'sonner';
 
+export interface TripAssignmentData {
+  companyName: string;
+  totalTrips: number;
+  vehiclesNeeded: number;
+  assignmentDate: string;
+}
+
 export const useTripAssignment = () => {
   const { drivers } = useDrivers();
   const { createTrip } = useTrips();
   const { addCompany } = useCompanies();
 
-  const assignTrips = async (companyName: string, totalTrips: number, vehiclesNeeded: number) => {
+  const assignTrips = async (data: TripAssignmentData) => {
     try {
+      const { companyName, totalTrips, vehiclesNeeded, assignmentDate } = data;
+      
       // Get available drivers
       const availableDrivers = drivers.filter(d => d.is_online && d.is_available);
       
@@ -29,17 +38,15 @@ export const useTripAssignment = () => {
         name: companyName,
         trips_requested: totalTrips,
         vehicles_assigned: vehiclesNeeded,
-        assignment_date: new Date().toISOString().split('T')[0]
+        assignment_date: assignmentDate
       });
 
       // Create trip assignments for each selected driver
-      const today = new Date().toISOString().split('T')[0];
-      
       for (const driver of sortedDrivers) {
         await createTrip({
           driver_id: driver.id,
           company_name: companyName,
-          trip_date: today,
+          trip_date: assignmentDate,
           status: 'pending'
         });
       }
