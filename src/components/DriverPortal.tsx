@@ -8,11 +8,15 @@ import { CheckCircle, XCircle, Clock, Truck, Target } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useTrips } from '@/hooks/useTrips';
+import { useRealtime } from '@/hooks/useRealtime';
 
 export const DriverPortal = () => {
   const { user } = useAuth();
   const { drivers, isLoading: driversLoading } = useDrivers();
   const { trips, updateTripStatus, isLoading: tripsLoading } = useTrips();
+
+  // Enable real-time updates
+  useRealtime();
 
   if (driversLoading || tripsLoading) {
     return (
