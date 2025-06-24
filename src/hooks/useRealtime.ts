@@ -7,9 +7,12 @@ export const useRealtime = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    // Create unique channel names with timestamps to avoid conflicts
+    const timestamp = Date.now();
+    
     // Subscribe to trips table changes
     const tripsChannel = supabase
-      .channel('trips-changes')
+      .channel(`trips-changes-${timestamp}`)
       .on(
         'postgres_changes',
         {
@@ -26,7 +29,7 @@ export const useRealtime = () => {
 
     // Subscribe to drivers table changes
     const driversChannel = supabase
-      .channel('drivers-changes')
+      .channel(`drivers-changes-${timestamp}`)
       .on(
         'postgres_changes',
         {
@@ -43,7 +46,7 @@ export const useRealtime = () => {
 
     // Subscribe to companies table changes
     const companiesChannel = supabase
-      .channel('companies-changes')
+      .channel(`companies-changes-${timestamp}`)
       .on(
         'postgres_changes',
         {
