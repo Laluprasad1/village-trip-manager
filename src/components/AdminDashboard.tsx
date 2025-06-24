@@ -20,10 +20,13 @@ export const AdminDashboard = () => {
   const { companies, isLoading: companiesLoading } = useCompanies();
   const { assignTrips } = useTripAssignment();
 
-  // Enable real-time updates
+  // Enable real-time updates only once at the top level
   useRealtime();
 
-  if (driversLoading || tripsLoading || companiesLoading) {
+  // Show loading state only if all data is still loading
+  const isFullyLoading = driversLoading && tripsLoading && companiesLoading;
+
+  if (isFullyLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

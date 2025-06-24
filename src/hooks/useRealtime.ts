@@ -1,12 +1,18 @@
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 export const useRealtime = () => {
   const queryClient = useQueryClient();
+  const channelsRef = useRef<any[]>([]);
 
   useEffect(() => {
+    // Prevent multiple subscriptions by checking if already subscribed
+    if (channelsRef.current.length > 0) {
+      return;
+    }
+
     // Create unique channel names with timestamps to avoid conflicts
     const timestamp = Date.now();
     
@@ -61,10 +67,14 @@ export const useRealtime = () => {
       )
       .subscribe();
 
+    // Store channels for cleanup
+    channelsRef.current = [tripsChannel, driversChannel, companiesChannel];
+
     return () => {
-      supabase.removeChannel(tripsChannel);
-      supabase.removeChannel(driversChannel);
-      supabase.removeChannel(companiesChannel);
+      channelsRef.current.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+      channelsRef.current = [];
     };
   }, [queryClient]);
 };

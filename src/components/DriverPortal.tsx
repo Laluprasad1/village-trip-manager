@@ -8,17 +8,14 @@ import { CheckCircle, XCircle, Clock, Truck, Target } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrivers } from '@/hooks/useDrivers';
 import { useTrips } from '@/hooks/useTrips';
-import { useRealtime } from '@/hooks/useRealtime';
 
 export const DriverPortal = () => {
   const { user } = useAuth();
   const { drivers, isLoading: driversLoading } = useDrivers();
   const { trips, updateTripStatus, isLoading: tripsLoading } = useTrips();
 
-  // Enable real-time updates
-  useRealtime();
-
-  if (driversLoading || tripsLoading) {
+  // Show loading state only if critical data is still loading
+  if (driversLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -151,10 +148,16 @@ export const DriverPortal = () => {
             <CardTitle>Today's Assignments ({today})</CardTitle>
             <CardDescription>
               Your trip assignments for today
+              {tripsLoading && <span className="ml-2 text-sm text-muted-foreground">(Loading...)</span>}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {todayTrips.length === 0 ? (
+            {tripsLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-500">Loading your assignments...</p>
+              </div>
+            ) : todayTrips.length === 0 ? (
               <div className="text-center py-8">
                 <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500">No trips assigned for today</p>

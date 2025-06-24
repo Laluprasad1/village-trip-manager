@@ -7,16 +7,12 @@ import { useTrips } from "@/hooks/useTrips";
 import { useDrivers } from "@/hooks/useDrivers";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRealtime } from "@/hooks/useRealtime";
 
 export const TodayAssignments = () => {
-  const { trips, updateTripStatus, canManageTrips } = useTrips();
-  const { drivers } = useDrivers();
-  const { companies } = useCompanies();
+  const { trips, updateTripStatus, canManageTrips, isLoading: tripsLoading } = useTrips();
+  const { drivers, isLoading: driversLoading } = useDrivers();
+  const { companies, isLoading: companiesLoading } = useCompanies();
   const { userRole, user } = useAuth();
-
-  // Enable real-time updates
-  useRealtime();
 
   const today = new Date().toISOString().split('T')[0];
   const todayTrips = trips.filter(t => t.trip_date === today);
@@ -62,6 +58,27 @@ export const TodayAssignments = () => {
 
   const userTrips = getCurrentUserTrips();
 
+  // Show loading state for critical data only
+  if (driversLoading || (userRole === 'admin' && companiesLoading)) {
+    return (
+      <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Today's Assignments - {new Date().toLocaleDateString()}
+          </CardTitle>
+          <CardDescription>Loading assignments...</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading assignments...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (userTrips.length === 0) {
     return (
       <Card className="transition-all duration-300 hover:shadow-lg animate-fade-in">
@@ -98,6 +115,7 @@ export const TodayAssignments = () => {
             ? `You have ${userTrips.length} assignment${userTrips.length === 1 ? '' : 's'} today`
             : `${todayCompanies.length} companies with ${userTrips.length} vehicle assignments`
           }
+          {tripsLoading && <span className="ml-2 text-sm">(Updating...)</span>}
         </CardDescription>
       </CardHeader>
       <CardContent>
