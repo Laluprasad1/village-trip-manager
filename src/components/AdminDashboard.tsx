@@ -12,7 +12,6 @@ import { useDrivers } from "@/hooks/useDrivers";
 import { useTrips } from "@/hooks/useTrips";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useTripAssignment } from "@/hooks/useTripAssignment";
-import { useRealtime } from "@/hooks/useRealtime";
 
 export const AdminDashboard = () => {
   const { drivers, isLoading: driversLoading } = useDrivers();
@@ -20,13 +19,7 @@ export const AdminDashboard = () => {
   const { companies, isLoading: companiesLoading } = useCompanies();
   const { assignTrips } = useTripAssignment();
 
-  // Enable real-time updates only once at the top level
-  useRealtime();
-
-  // Show loading state only if all data is still loading
-  const isFullyLoading = driversLoading && tripsLoading && companiesLoading;
-
-  if (isFullyLoading) {
+  if (driversLoading || tripsLoading || companiesLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>

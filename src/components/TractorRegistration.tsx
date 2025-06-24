@@ -5,27 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Plus, Truck, Search, AlertTriangle, Trash2, Edit, UserPlus } from "lucide-react";
+import { Plus, Truck, Search, AlertTriangle, Trash2 } from "lucide-react";
 import { useDrivers } from "@/hooks/useDrivers";
 import { useAuth } from "@/contexts/AuthContext";
-import { useRealtime } from "@/hooks/useRealtime";
 import { toast } from "sonner";
 
 export const TractorRegistration = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingDriver, setEditingDriver] = useState<any>(null);
-  const [editForm, setEditForm] = useState({
-    monthly_target: 20,
-    is_available: true
-  });
-  
-  const { drivers, isLoading, toggleAvailability, deleteDriver, updateDriver, canDelete } = useDrivers();
+  const { drivers, isLoading, toggleAvailability, deleteDriver, canDelete } = useDrivers();
   const { userRole } = useAuth();
-  
-  // Enable real-time updates
-  useRealtime();
 
   const filteredDrivers = drivers.filter(driver =>
     driver.profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -35,25 +23,9 @@ export const TractorRegistration = () => {
   const onlineCount = drivers.filter(d => d.is_online).length;
   const belowTargetCount = drivers.filter(d => d.monthly_trips < d.monthly_target).length;
 
-  const handleDeleteDriver = (driverId: string, driverName: string) => {
-    if (window.confirm(`Are you sure you want to remove ${driverName}? This action cannot be undone.`)) {
+  const handleDeleteDriver = (driverId: string) => {
+    if (window.confirm('Are you sure you want to remove this driver?')) {
       deleteDriver(driverId);
-    }
-  };
-
-  const handleEditDriver = (driver: any) => {
-    setEditingDriver(driver);
-    setEditForm({
-      monthly_target: driver.monthly_target || 20,
-      is_available: driver.is_available || true
-    });
-  };
-
-  const handleSaveEdit = () => {
-    if (editingDriver) {
-      updateDriver(editingDriver.id, editForm);
-      setEditingDriver(null);
-      toast.success('Driver updated successfully');
     }
   };
 
@@ -147,65 +119,15 @@ export const TractorRegistration = () => {
                   </div>
                   
                   <div className="flex items-center space-x-4">
-                    {userRole === 'admin' && (
-                      <>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleEditDriver(driver)}
-                              className="transition-all duration-200 hover:scale-105"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>Edit Driver Details</DialogTitle>
-                              <DialogDescription>
-                                Update details for {driver.profile?.full_name}
-                              </DialogDescription>
-                            </DialogHeader>
-                            <div className="grid gap-4 py-4">
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="target" className="text-right">
-                                  Monthly Target
-                                </Label>
-                                <Input
-                                  id="target"
-                                  type="number"
-                                  value={editForm.monthly_target}
-                                  onChange={(e) => setEditForm({...editForm, monthly_target: parseInt(e.target.value) || 20})}
-                                  className="col-span-3"
-                                />
-                              </div>
-                              <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="available" className="text-right">
-                                  Available
-                                </Label>
-                                <Switch
-                                  id="available"
-                                  checked={editForm.is_available}
-                                  onCheckedChange={(checked) => setEditForm({...editForm, is_available: checked})}
-                                />
-                              </div>
-                            </div>
-                            <DialogFooter>
-                              <Button onClick={handleSaveEdit}>Save Changes</Button>
-                            </DialogFooter>
-                          </DialogContent>
-                        </Dialog>
-
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDeleteDriver(driver.id, driver.profile?.full_name || 'Unknown Driver')}
-                          className="transition-all duration-200 hover:scale-105"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
+                    {canDelete && (
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDeleteDriver(driver.id)}
+                        className="transition-all duration-200 hover:scale-105"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     )}
                     
                     <div className="flex items-center space-x-3">

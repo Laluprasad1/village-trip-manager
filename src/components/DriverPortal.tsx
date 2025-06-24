@@ -14,8 +14,7 @@ export const DriverPortal = () => {
   const { drivers, isLoading: driversLoading } = useDrivers();
   const { trips, updateTripStatus, isLoading: tripsLoading } = useTrips();
 
-  // Show loading state only if critical data is still loading
-  if (driversLoading) {
+  if (driversLoading || tripsLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -148,16 +147,10 @@ export const DriverPortal = () => {
             <CardTitle>Today's Assignments ({today})</CardTitle>
             <CardDescription>
               Your trip assignments for today
-              {tripsLoading && <span className="ml-2 text-sm text-muted-foreground">(Loading...)</span>}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {tripsLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-500">Loading your assignments...</p>
-              </div>
-            ) : todayTrips.length === 0 ? (
+            {todayTrips.length === 0 ? (
               <div className="text-center py-8">
                 <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-500">No trips assigned for today</p>
