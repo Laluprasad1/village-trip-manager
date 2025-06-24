@@ -7,12 +7,16 @@ import { useTrips } from "@/hooks/useTrips";
 import { useDrivers } from "@/hooks/useDrivers";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useAuth } from "@/contexts/AuthContext";
+import { useRealtime } from "@/hooks/useRealtime";
 
 export const TodayAssignments = () => {
   const { trips, updateTripStatus, canManageTrips } = useTrips();
   const { drivers } = useDrivers();
   const { companies } = useCompanies();
   const { userRole, user } = useAuth();
+
+  // Enable real-time updates
+  useRealtime();
 
   const today = new Date().toISOString().split('T')[0];
   const todayTrips = trips.filter(t => t.trip_date === today);

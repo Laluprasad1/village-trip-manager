@@ -12,12 +12,16 @@ import { useDrivers } from "@/hooks/useDrivers";
 import { useTrips } from "@/hooks/useTrips";
 import { useCompanies } from "@/hooks/useCompanies";
 import { useTripAssignment } from "@/hooks/useTripAssignment";
+import { useRealtime } from "@/hooks/useRealtime";
 
 export const AdminDashboard = () => {
   const { drivers, isLoading: driversLoading } = useDrivers();
   const { trips, isLoading: tripsLoading } = useTrips();
   const { companies, isLoading: companiesLoading } = useCompanies();
   const { assignTrips } = useTripAssignment();
+
+  // Enable real-time updates
+  useRealtime();
 
   if (driversLoading || tripsLoading || companiesLoading) {
     return (
