@@ -32,9 +32,12 @@ export const useTrips = () => {
         throw error;
       }
 
+      console.log('Fetched trips:', data);
       return data || [];
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 10000, // 10 seconds
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   const updateTripStatusMutation = useMutation({
@@ -48,7 +51,9 @@ export const useTrips = () => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate both trips and drivers queries to update counts
       queryClient.invalidateQueries({ queryKey: ['trips'] });
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
       toast.success('Trip status updated successfully');
     },
     onError: (error) => {
@@ -68,6 +73,7 @@ export const useTrips = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
+      queryClient.invalidateQueries({ queryKey: ['drivers'] });
       toast.success('Trip assigned successfully');
     },
     onError: (error) => {

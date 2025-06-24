@@ -128,7 +128,7 @@ export const TractorRegistration = () => {
                     
                     <div>
                       <p className="font-medium text-lg transition-colors duration-200 hover:text-blue-600">
-                        {driver.profile?.full_name || 'Unknown Driver'}
+                        {driver.profile?.full_name || 'Loading...'}
                       </p>
                       <div className="flex items-center gap-3 mt-1">
                         <span className="text-sm text-muted-foreground">
@@ -141,7 +141,7 @@ export const TractorRegistration = () => {
                         )}
                       </div>
                       <span className="text-xs text-muted-foreground">
-                        {driver.profile?.mobile_number}
+                        {driver.profile?.mobile_number || 'No mobile number'}
                       </span>
                     </div>
                   </div>
@@ -164,7 +164,7 @@ export const TractorRegistration = () => {
                             <DialogHeader>
                               <DialogTitle>Edit Driver Details</DialogTitle>
                               <DialogDescription>
-                                Update details for {driver.profile?.full_name}
+                                Update details for {driver.profile?.full_name || 'Driver'}
                               </DialogDescription>
                             </DialogHeader>
                             <div className="grid gap-4 py-4">

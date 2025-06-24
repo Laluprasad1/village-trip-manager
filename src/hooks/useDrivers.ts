@@ -28,12 +28,19 @@ export const useDrivers = () => {
   const { data: drivers = [], isLoading, error } = useQuery({
     queryKey: ['drivers'],
     queryFn: async () => {
-      console.log('Fetching drivers...');
+      console.log('Fetching drivers with profiles...');
       
-      // First get drivers
+      // Get drivers with their profiles in a single query using join
       const { data: driversData, error: driversError } = await supabase
         .from('drivers')
-        .select('*')
+        .select(`
+          *,
+          profile:profiles!drivers_user_id_fkey(
+            full_name,
+            email,
+            mobile_number
+          )
+        `)
         .order('serial_number');
 
       if (driversError) {
@@ -41,25 +48,12 @@ export const useDrivers = () => {
         throw driversError;
       }
 
-      // Then get profiles for each driver
-      const driversWithProfiles = await Promise.all(
-        (driversData || []).map(async (driver) => {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, email, mobile_number')
-            .eq('id', driver.user_id)
-            .single();
-
-          return {
-            ...driver,
-            profile: profile || null
-          };
-        })
-      );
-
-      return driversWithProfiles;
+      console.log('Fetched drivers:', driversData);
+      return driversData || [];
     },
-    enabled: !!userRole
+    enabled: !!userRole,
+    staleTime: 30000, // 30 seconds
+    refetchInterval: 60000, // Refetch every minute
   });
 
   const updateDriverMutation = useMutation({

@@ -7,9 +7,11 @@ export const useRealtime = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    // Subscribe to trips table changes
-    const tripsChannel = supabase
-      .channel('trips-changes')
+    console.log('Setting up realtime subscriptions...');
+    
+    // Create a single channel for all table changes
+    const channel = supabase
+      .channel('db-changes')
       .on(
         'postgres_changes',
         {
@@ -17,16 +19,11 @@ export const useRealtime = () => {
           schema: 'public',
           table: 'trips'
         },
-        () => {
-          // Invalidate and refetch trips data
+        (payload) => {
+          console.log('Trips table changed:', payload);
           queryClient.invalidateQueries({ queryKey: ['trips'] });
         }
       )
-      .subscribe();
-
-    // Subscribe to drivers table changes
-    const driversChannel = supabase
-      .channel('drivers-changes')
       .on(
         'postgres_changes',
         {
@@ -34,16 +31,11 @@ export const useRealtime = () => {
           schema: 'public',
           table: 'drivers'
         },
-        () => {
-          // Invalidate and refetch drivers data
+        (payload) => {
+          console.log('Drivers table changed:', payload);
           queryClient.invalidateQueries({ queryKey: ['drivers'] });
         }
       )
-      .subscribe();
-
-    // Subscribe to companies table changes
-    const companiesChannel = supabase
-      .channel('companies-changes')
       .on(
         'postgres_changes',
         {
@@ -51,17 +43,28 @@ export const useRealtime = () => {
           schema: 'public',
           table: 'companies'
         },
-        () => {
-          // Invalidate and refetch companies data
+        (payload) => {
+          console.log('Companies table changed:', payload);
           queryClient.invalidateQueries({ queryKey: ['companies'] });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        (payload) => {
+          console.log('Profiles table changed:', payload);
+          queryClient.invalidateQueries({ queryKey: ['drivers'] });
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(tripsChannel);
-      supabase.removeChannel(driversChannel);
-      supabase.removeChannel(companiesChannel);
+      console.log('Cleaning up realtime subscriptions...');
+      supabase.removeChannel(channel);
     };
   }, [queryClient]);
 };
