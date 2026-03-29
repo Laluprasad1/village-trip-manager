@@ -14,16 +14,170 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      companies: {
+        Row: {
+          assignment_date: string | null
+          created_at: string | null
+          id: string
+          name: string
+          trips_requested: number | null
+          vehicles_assigned: number | null
+        }
+        Insert: {
+          assignment_date?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          trips_requested?: number | null
+          vehicles_assigned?: number | null
+        }
+        Update: {
+          assignment_date?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          trips_requested?: number | null
+          vehicles_assigned?: number | null
+        }
+        Relationships: []
+      }
+      drivers: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_available: boolean | null
+          is_online: boolean | null
+          monthly_target: number | null
+          monthly_trips: number | null
+          serial_number: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_available?: boolean | null
+          is_online?: boolean | null
+          monthly_target?: number | null
+          monthly_trips?: number | null
+          serial_number: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_available?: boolean | null
+          is_online?: boolean | null
+          monthly_target?: number | null
+          monthly_trips?: number | null
+          serial_number?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          full_name: string | null
+          id: string
+          mobile_number: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          mobile_number?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          mobile_number?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      trips: {
+        Row: {
+          assigned_at: string | null
+          company_name: string
+          created_at: string | null
+          driver_id: string | null
+          id: string
+          status: string | null
+          trip_date: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          company_name: string
+          created_at?: string | null
+          driver_id?: string | null
+          id?: string
+          status?: string | null
+          trip_date: string
+        }
+        Update: {
+          assigned_at?: string | null
+          company_name?: string
+          created_at?: string | null
+          driver_id?: string | null
+          id?: string
+          status?: string | null
+          trip_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          role_name: Database["public"]["Enums"]["user_role"]
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      user_role: "driver" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +304,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["driver", "admin"],
+    },
   },
 } as const
