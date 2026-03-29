@@ -20,6 +20,19 @@ export const AuthPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const handleGoogleSignIn = async () => {
+    const { error } = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: window.location.origin,
+    });
+    if (error) {
+      toast({
+        title: 'Google Sign-In Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
   const [loginForm, setLoginForm] = useState({
     email: '',
     password: '',
