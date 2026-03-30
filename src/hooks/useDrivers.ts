@@ -49,7 +49,7 @@ export const useDrivers = () => {
       }
 
       console.log('Fetched drivers:', driversData);
-      return (driversData || []) as unknown as Driver[];
+      return driversData || [];
     },
     enabled: !!userRole,
     staleTime: 30000, // 30 seconds
